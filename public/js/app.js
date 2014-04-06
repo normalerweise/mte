@@ -4,22 +4,29 @@
 
 require(['angular', './controllers' ,'./directives', './filters', './services', 'angular-animate', 'angular-ui-router', 'ui-bootstrap-tpls' ],
   function(angular, controllers) {
-    require(['./lib/angular-toaster', './lib/angular-loading'], function() {
+    require(['./lib/angular-toaster', './lib/angular-loading', './lib/ng-table', './lib/ng-upload'], function() {
     // Declare app level module which depends on filters, and services
     
-    angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 'ui.router', 'ui.bootstrap', 'toaster', 'darthwade.dwLoading'])
+    angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 'ui.router', 'ui.bootstrap', 'toaster', 'darthwade.dwLoading', 'ngTable', 'ngUpload'])
       .config(function($stateProvider, $urlRouterProvider) { $stateProvider
+        .state('withNavbar', {
+          abstract: true,
+          templateUrl: "partials/with_navbar.html"
+        })
         .state('extraction', {
-          url: "/extraction",
-          templateUrl: "partials/extraction.html"
-
+          parent: 'withNavbar',
+          url: "/extraction?extractionRunId",
+          reloadOnSearch: false,
+          templateUrl: "partials/extraction.html",
+          controller: controllers.ExtractionCtrl
         })
         .state('extraction.semistructured', {
           url: "/semistructured",
           views: {
             "": {
-              templateUrl: "partials/extraction_semistructured.html",
-              controller: controllers.SemistructuredExtraction
+              reloadOnSearch: false,
+              templateUrl: "partials/tabbed_view.html",
+              controller: controllers.SemistructuredExtractionCtrl
             },
             "events": {
               templateUrl: "partials/events.html",
@@ -29,12 +36,8 @@ require(['angular', './controllers' ,'./directives', './filters', './services', 
         })
         .state('extraction.semistructured.overview', {
           url: "/overview",
-          templateUrl: "partials/extraction_semistructured_overview.html"
-        })
-        .state('extraction.semistructured.queryDBpedia', {
-          url: "/querydbpedia",
-          templateUrl: 'partials/partial1.html',
-          controller: controllers.MyCtrl1
+          templateUrl: "partials/extraction_semistructured_overview.html",
+          controller: controllers.ExtractionRunCtrl
         })
         .state('extraction.semistructured.generateSample', {
           url: "/sample",
@@ -55,6 +58,30 @@ require(['angular', './controllers' ,'./directives', './filters', './services', 
           url: "/stats",
           templateUrl: 'partials/partial5.html',
           controller: controllers.MyCtrl5
+        })
+        .state('masterdata',{
+           parent: 'withNavbar',
+           url: "/masterdata",
+           templateUrl: "partials/masterdata.html"
+
+        })
+        .state('masterdata.dbpedia',{
+          url: "/dbpedia",
+          views: {
+            "": {
+              templateUrl: "partials/tabbed_view.html",
+              controller: controllers.DBpediaMasterdata
+            },
+            "events": {
+              templateUrl: "partials/events.html",
+              controller: controllers.Events
+            }
+          }
+        })
+        .state('masterdata.dbpedia.queryCompanyResources', {
+          url: "/query-company-resources",
+          templateUrl: 'partials/partial1.html',
+          controller: controllers.MyCtrl1
         })
 
         $urlRouterProvider.otherwise("/extraction/semistructured/overview");

@@ -1,15 +1,21 @@
-<div class="page-header">
+<!-- <div class="page-header">
     <h1>Extract Article/Revisions of Sample Companies <small>todo</small></h1>
-</div>
+</div> -->
+<p>
+  <button class="btn btn-primary" ng-click="extractSample()">Extract Sample</button>
+  <button class="btn btn-default" ng-click="listExtractedData()">Refresh Extracted Data</button>
+</p>
+<br/><br/>
 
-<div id="alerts">{{ alert }}</div>
-<button ng-click="extractSample()">Extract Sample</button>
-<button ng-click="listExtractedData()">List Extracted Data</button>
-<br/>
-<p>No of companies in Sample: {{ sample.length }}</p>
-<li ng-repeat="companyQuads in sample">
-    <ul>
-        <a href="/data/triples_over_time/{{companyQuads}}">{{companyQuads}}</a>
-    </ul>
-</li>
+<p>No of companies: {{ sampleSize }}</p>
+
+<table ng-table="tableParams" show-filter="true" class="table">
+    <tr ng-repeat="pageResult in $data">
+        <td data-title="'Page Title'" sortable="'page.uriTitle'" filter="{ 'page': 'text' }">{{pageResult.page.uriTitle}}</td>
+        <td data-title="'No of Quads'" sortable="'numberOfQuads'">{{pageResult.numberOfQuads}}</td>
+        <td data-title="'No of Temporal Quads'" sortable="'numberOfTemporalQuads'">{{pageResult.numberOfTemporalQuads}}</td>
+        <td data-title="'Results'"><a ng-show="pageResult.numberOfQuads > 0" target="_blank" href="/api/v1/pages/{{pageResult.page.uriTitle}}/results?extractionRunId={{pageResult.extractionRunId}}">display</a></td>
+    </tr>
+</table>
+
 

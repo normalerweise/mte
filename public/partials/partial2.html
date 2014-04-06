@@ -1,24 +1,33 @@
-<div class="page-header">
-    <h1>Company Random Sample
-        <small>todo</small>
-    </h1>
-</div>
 <div style="position:relative;">
-    <div dw-loading="sample" dw-loading-options="{active: true, text: false}">
-        <form class="form-inline" role="form" ng-submit="generateSample()">
+    <div dw-loading="sample" dw-loading-options="{active: false, text: false}">
+        <p>Random Sample:</p>
+        <form class="form-inline" role="form" ng-submit="generateCompanySample()">
             <div class="form-group">
-                <label class="sr-only" for="inputSampleSize">Email address</label>
-
                 <div class="input-group" style="width:150px">
-                    <input type="number" class="form-control" id="inputSampleSize" ng-model="sample.size">
+                    <input type="number" class="form-control" id="inputSampleSize" ng-model="formData.size">
                     <span class="input-group-addon">Size</span>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Generate Random Sample</button>
+            <button type="submit" class="btn btn-primary">Generate Company Random Sample</button>
+        </form>
+        <br/>
+        <p>Specific sample from Line separated Resource URIs:</p>
+        <form  class="form-inline" role="form"  ng-upload="uploadComplete(content)" action="/api/v1/sample/from-file?extractionRunId=234">
+            <div class="form-group">
+            <input type="file" name="file" />
+          <input type="hidden" name="extractionRunId" value="{{extractionRunId()}}">
+          <input class="btn btn-primary" type="submit" class="btn" value="Submit" ng-disabled="$isLoading" upload-submit />
+                </div>
         </form>
         <br/><br/>
-        <p>No of companies in Sample: {{ sample.elements.length }}</p>
+        <p>No of resources in Extraction Run: {{ extractionRun.resources.length || 0}}</p>
         <br/>
+        <table ng-table="tableParams" show-filter="true" class="table ng-table-rowselected">
+            <tr ng-repeat="element in $data">
+                <td data-title="'Resource URI'" sortable="'uri'" filter="{ 'uri': 'text' }">{{element.uri}}</td>
+            </tr>
+        </table>
+<!--
         <div>
             <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
                 Previous
@@ -35,5 +44,5 @@
                 <a href="{{company}}">{{company}}</a>
             </ul>
         </li>
-    </div>
+    </div> -->
 </div>

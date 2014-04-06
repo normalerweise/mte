@@ -1,57 +1,99 @@
 package extractors
+
 //
-//import org.dbpedia.extraction.util.Language
-//import org.dbpedia.extraction.sources.WikiPage
-//import org.dbpedia.extraction.wikiparser.WikiTitle
-//import org.dbpedia.extraction.wikiparser.WikiParser
-//import org.dbpedia.extraction.mappings.PageContext
-//import ch.weisenburger.dbpedia.extraction.mappings.{RuntimeAnalyzer, TemporalQuad}
-//
-object TemporalMappingExtractorWrapper {
-//
-//  def extract(page: PageWithRevisionsContent) = {
-//    val analyzer = RuntimeAnalyzer(buildSubjectURI(WikiTitle.parse(page.title, Language.English)))
-//    analyzer.start
-//    val quads = page.revisions.map(r => extractRevision(page.title, Language.English, r.content)).flatten
-//    analyzer.stop
-//    mapDBPediaExtractorQuadsToCustomQuads(quads)
-//  }
-//
-//  def mapDBPediaExtractorQuadsToCustomQuads(quads: Seq[org.dbpedia.extraction.destinations.Quad]) = {
-//    quads.map( _ match {
-//      case dbPediaQuad: TemporalQuad => Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Map( "fromDate" -> dbPediaQuad.fromDate, "toDate" -> dbPediaQuad.toDate))
-//      case dbPediaQuad: org.dbpedia.extraction.destinations.Quad => Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Map.empty[String,String])
-//    })
-//  }
-//
-//  def extractRevision(pageTitle: String, pageLang: Language, revContent: String): Seq[org.dbpedia.extraction.destinations.Quad] = {
-//    val wikiTitle = WikiTitle.parse(pageTitle, pageLang)
-//    val subjectUri = buildSubjectURI(wikiTitle)
-//
-//    val analyzer = RuntimeAnalyzer(subjectUri)
-//
-//    analyzer.startWikiParser
-//    val page = buildWikiPage(wikiTitle, pageLang, revContent)
-//    val parsedPage = parseWikiPage(page)
-//    analyzer.stopWikiParser
-//
-//
-//    DBPediaExtractorWrapper.extract(Language.English, parsedPage, subjectUri, pageContext)
-//  }
-//
-//  def buildWikiPage(title: WikiTitle, lang: Language, revContent: String) = {
-//    new WikiPage(title, revContent)
-//  }
-//
-//  def parseWikiPage(page: WikiPage) = {
-//    val parser = WikiParser.getInstance()
-//    parser(page)
-//  }
-//
-//  def buildSubjectURI(title: WikiTitle) = {
-//     title.language.resourceUri.append(title.decodedWithNamespace)
-//  }
-//
-//  def pageContext = new PageContext()
-//
+
+import org.dbpedia.extraction.wikiparser.WikiTitle
+import org.dbpedia.extraction.wikiparser.WikiParser
+import org.dbpedia.extraction.mappings.{PageContext, MappingExtractor}
+import ch.weisenburger.dbpedia.extraction.mappings.{RuntimeAnalyzer, TemporalQuad}
+import models.{Quad, Revision}
+import org.dbpedia.extraction.util.Language
+import org.dbpedia.extraction.sources.WikiPage
+import play.api.Logger
+
+
+case class NoContentException(message: String) extends Exception(message)
+
+case class NoPageException(message: String) extends Exception(message)
+
+// All dependencies we don't know for sure whether they are thread safe or not
+class ThreadUnsafeDependencies {
+
+  val wikiParser = WikiParser.getInstance()
+
+  val englishTemporalMappingExtractor = new MappingExtractor(DBpediaExtractorFrameworkContextFactory.createContext(Language.English))
+
+}
+
+object ThreadUnsafeDependencies {
+  def create(callerIdentifier: String) = synchronized {
+    Logger.info("Creating threadunsafe dependencies for " + callerIdentifier)
+    new ThreadUnsafeDependencies
+  }
+}
+
+class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUnsafeDependencies) {
+
+  def extract(rev: Revision): Seq[Quad] = {
+    checkPage(rev)
+    checkContent(rev)
+
+    val dbPediaExtractionFrameworkQuads = extractWithTemporalMappingExtractor(rev)
+
+    dbPediaExtractionFrameworkQuads.map(convertDBPediaExtractorQuadsToCustomQuad(rev, _))
+  }
+
+  private def checkPage(revision: Revision) =
+    if (revision.page.isEmpty)
+      throw NoPageException(s"Revision ${revision.id} has no page information. Can't extract!")
+
+
+  private def checkContent(revision: Revision) =
+    if (revision.content.isEmpty)
+      throw NoContentException(s"Revision ${revision.id} of page ${revision.page.get.uriTitle} has no content. Can't extract!")
+
+
+  private def extractWithTemporalMappingExtractor(rev: Revision): Seq[org.dbpedia.extraction.destinations.Quad] = {
+    assert(rev.wikiLanguage == Language.English)
+    val analyzer = RuntimeAnalyzer(rev.subjectURI)
+
+    analyzer.startWikiParser
+    val page = buildWikiPage(rev.wikiTitle, rev.wikiLanguage, rev.content.get)
+    val parsedPage = parseWikiPage(page)
+    analyzer.stopWikiParser
+
+    threadUnsafeDependencies.
+      englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
+  }
+
+  private def convertDBPediaExtractorQuadsToCustomQuad(rev: Revision, quad: org.dbpedia.extraction.destinations.Quad) = {
+    quad match {
+      case dbPediaQuad: TemporalQuad =>
+        val fromDate  = Option(dbPediaQuad.fromDate) match {
+          case Some(fromDate) => List("fromDate" -> fromDate)
+          case None => List.empty
+        }
+        val toDate  = Option(dbPediaQuad.toDate) match {
+          case Some(toDate) => List("toDate" -> toDate)
+          case None => List.empty
+        }
+
+        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value,
+          (List("sourceRevision" -> rev.id.toString) ++ fromDate ++ toDate).toMap)
+      case dbPediaQuad: org.dbpedia.extraction.destinations.Quad =>
+        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Map("sourceRevision" -> rev.id.toString))
+    }
+  }
+
+  private def buildWikiPage(title: WikiTitle, lang: Language, revContent: String) = {
+    new WikiPage(title, revContent)
+  }
+
+  private def parseWikiPage(page: WikiPage) = {
+    threadUnsafeDependencies.wikiParser(page)
+  }
+
+
+  private def pageContext = new PageContext()
+
 }

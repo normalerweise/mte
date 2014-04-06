@@ -1,46 +1,77 @@
 package controllers
 
-import play.api.mvc.{Action, Controller}
-import play.api.libs.json.Json
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import extractors.RelevantRevisionDownloader
-import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
-import java.io.File
+import play.api.mvc.{Action, Controller}
 import play.api.Play.current
-import scala.io.Codec
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.concurrent.Akka
+import play.api.libs.json._
+
+import extractors.RelevantRevisionDownloader
 import actors.DownloadAndSavePage
-import models.Revision
+import models.{ExtractionRun, Revision}
+import models.Util._
 
 /**
   * Created by Norman on 20.03.14.
   */
 object PageController extends Controller {
 
-  implicit val codec = Codec.UTF8
-
    def listDownloadedData = Action.async {
      Revision.getAllPages.map(res => Ok(Json.toJson(res)))
    }
+
+  def listDownloadedDataOfExtractionRun(extractionRunId: String) = Action.async {
+    val resources = ExtractionRun.getById(extractionRunId).map( _.get.getResources)
+    val pageNames = Revision.getAllPageNames.map( _.map(name => (name,name) ).toMap)
+    val result = for {
+      res <- resources
+      names <- pageNames
+    } yield {
+      for{
+        r <- res
+        hasData = names.get(r._1).isDefined
+      } yield Json.obj( "pageTitle" -> r._1, "resource" -> r._2, "hasDownloadedData" -> hasData )
+    }
+
+    result.map( result => Ok(Json.toJson(result)))
+
+  }
 
   def getPageRevsAsJson(pageTitleInUri: String) = Action.async {
     Revision.getPageRevsAsJson(pageTitleInUri)
       .map( revs => Ok(Json.prettyPrint(Json.toJson(revs))))
   }
 
-   def downloadSample = Action {
+   def downloadResourcesOfExtractionRun(extractionRunId: String) = Action {
      import actors.DefaultActors._
      Akka.system.scheduler.scheduleOnce(1000.microsecond) {
-       val sample = Helper.readRandomSample
-       sample.foreach( pageUri => pageDownloader ! DownloadAndSavePage(getPageTitle(pageUri)))
+       val run = ExtractionRun.getById(extractionRunId).map( _.get)
+       run.onSuccess{ case run =>
+         val sampleSize = run.getResources.size
+         run.getResources.view.zipWithIndex.foreach{ case (pageUri,index) => pageDownloader ! DownloadAndSavePage(Some(run.id), index+1, sampleSize, pageUri._1)}
+       }
      }
      Ok
    }
 
-  def getPageTitle(pageUri: String) = {
-   val title = pageUri.split('/').last
-    assert(title != null )
-    title
+  def updateDownloadedData = Action {
+    import actors.DefaultActors._
+    Akka.system.scheduler.scheduleOnce(1000.microsecond) {
+      val pageNames = Revision.getAllPageNames
+
+      pageNames.onSuccess {
+        case pageNames =>
+          val size = pageNames.size
+          pageNames.view.zipWithIndex.foreach {
+            case (pageUri, index) => pageDownloader ! DownloadAndSavePage(None,index+1, size, getLastUriComponent(pageUri)) }
+      }
+      pageNames.onFailure {
+        case ex => throw ex
+      }
+    }
+
+    Ok
   }
 
   def downloadSingleWikiPage(pageTitleInUri: String) = Action {

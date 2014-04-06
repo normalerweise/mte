@@ -1,56 +1,79 @@
-<div class="page-header">
+<!--<div class="page-header">
     <h1>Display sample stats <small>todo</small></h1>
-</div>
+</div> -->
 
-<div id="alerts">{{ alert }}</div>
-<button ng-click="getSampleStats()">Get Sample Stats</button>
+<p>
+  <button class="btn btn-default" ng-click="getSampleStats()">Refresh Stats</button>
+</p>
+
 
 <br/>
-        <div ng-show="stats.aggregated">
-<p>No of companies in Sample: {{ stats.aggregated.sampleSize }}</p>
 
-<h1>Summary</h1>
+    <div style="position:relative;">
+        <div dw-loading="stats" dw-loading-options="{active: false, text: false}">
+            <div ng-show="stats">
+<p>No of companies in Sample: {{ noOfPages }}</p>
 
-<table>
-    <tr>
-      <td>Figure</td>
-        <td>3 Years</td>
-        <td>5 Years</td>
-    </tr>
-    <tr>
-        <td>Revenue Years</td>
-        <td>{{ stats.aggregated.revenue3Abs }}({{ stats.aggregated.revenue3Rel }})</td>
-        <td>{{ stats.aggregated.revenue5Abs }}({{ stats.aggregated.revenue5Rel }})</td>
-    </tr>
-    <tr>
-        <td>OperatingIncomeYears</td>
-        <td>{{ stats.aggregated.operatingIncome3Abs }}({{ stats.aggregated.operatingIncome3Rel }})</td>
-        <td>{{ stats.aggregated.operatingIncome5Abs }}({{ stats.aggregated.operatingIncome5Rel }})</td>
-    </tr>
-    <tr>
-        <td>NetIncomeYears</td>
-        <td>{{ stats.aggregated.netIncome3Abs }}({{ stats.aggregated.netIncome3Rel }})</td>
-        <td>{{ stats.aggregated.netIncome5Abs }}({{ stats.aggregated.netIncome5Rel }})</td>
-    </tr>
-    <tr>
-        <td>TotalAssetsYears</td>
-        <td>{{ stats.aggregated.assets3Abs }}({{ stats.aggregated.assets3Rel }})</td>
-        <td>{{ stats.aggregated.assets5Abs }}({{ stats.aggregated.assets5Rel }})</td>
-    </tr>
-    <tr>
-        <td>TotalEquityIncreaseYears</td>
-        <td>{{ stats.aggregated.equity3Abs }}({{ stats.aggregated.equity3Rel }})</td>
-        <td>{{ stats.aggregated.equity5Abs }}({{ stats.aggregated.equity5Rel }})</td>
-    </tr>
-    <tr>
-        <td>EmployeeYears</td>
-        <td>{{ stats.aggregated.employees3Abs }}({{ stats.aggregated.employees3Rel }})</td>
-        <td>{{ stats.aggregated.employees5Abs }}({{ stats.aggregated.employees5Rel }})</td>
-    </tr>
-</table>
+<h3>Summary</h3>
 
+            <table>
+                <tr>
+                    <td>Figure</td>
+                    <td>3 Years</td>
+                    <td>5 Years</td>
+                </tr>
+                <tr>
+                    <td>Revenue Years</td>
+                    <td>{{ stats.revenue._3years }}({{ stats.revenue._3yearsRel }})</td>
+                    <td>{{ stats.revenue._3years }}({{ stats.revenue._5yearsRel }})</td>
+                </tr>
+                <tr>
+                    <td>OperatingIncomeYears</td>
+                    <td>{{ stats.operatingIncome._3years }}({{ stats.operatingIncome._3yearsRel }})</td>
+                    <td>{{ stats.operatingIncome._3years }}({{ stats.operatingIncome._5yearsRel }})</td>
+                </tr>
+                <tr>
+                    <td>NetIncomeYears</td>
+                    <td>{{ stats.netIncome._3years }}({{ stats.netIncome._3yearsRel }})</td>
+                    <td>{{ stats.netIncome._3years }}({{ stats.netIncome._5yearsRel }})</td>
+                </tr>
+                <tr>
+                    <td>TotalAssetsYears</td>
+                    <td>{{ stats.assets._3years }}({{ stats.assets._3yearsRel }})</td>
+                    <td>{{ stats.assets._3years }}({{ stats.assets._5yearsRel }})</td>
+                </tr>
+                <tr>
+                    <td>TotalEquityIncreaseYears</td>
+                    <td>{{ stats.equity._3years }}({{ stats.equity._3yearsRel }})</td>
+                    <td>{{ stats.equity._3years }}({{ stats.equity._5yearsRel }})</td>
+                </tr>
+                <tr>
+                    <td>EmployeeYears</td>
+                    <td>{{ stats.numberOfEmployees._3years }}({{ stats.numberOfEmployees._3yearsRel }})</td>
+                    <td>{{ stats.numberOfEmployees._3years }}({{ stats.numberOfEmployees._5yearsRel }})</td>
+                </tr>
+            </table>
+            <h3>Details</h3>
+            <p>Figures in number of different years</p>
+            <table ng-table="tableParams" show-filter="true" class="table">
+                <tr ng-repeat="page in $data">
+                    <td data-title="'Page Title'" sortable="'uriTitle'" filter="{ 'pageName': 'text' }">{{page.pageName}}</td>
+                    <td data-title="'Equity'" sortable="'equity'">{{page.equity.numberOfYears}}</td>
+                    <td data-title="'OperatingIncome'" sortable="'operatingIncome'">{{page.operatingIncome.numberOfYears}}</td>
+                    <td data-title="'NetIncome'" sortable="'netIncome'">{{page.netIncome.numberOfYears}}</td>
+                    <td data-title="'Revenue'" sortable="'revenue'">{{page.revenue.numberOfYears}}</td>
+                    <td data-title="'Assets'" sortable="'assets'">{{page.assets.numberOfYears}}</td>
+                    <td data-title="'Number Of Employees'" sortable="'numberOfEmployees'">{{page.numberOfEmployees.numberOfYears}}</td>
+                </tr>
+            </table>
 
+<h3>Events</h3>
 
+  <a  target="_blank" href="/api/v1/extractionruns/{{extractionRunId()}}/event-stats">Event Stats</a>
+</div>
+            </div>
+
+<!--
 <h1>Details</h1>
 
 <table>
@@ -75,7 +98,7 @@
 </table>
             <h1>Runtime</h1>
             <a href="data/runtime.json">Runtime File</a>
-        </div>
+        </div> -->
 
 
 

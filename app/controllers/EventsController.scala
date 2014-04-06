@@ -1,9 +1,9 @@
 package controllers
 
-import play.api.mvc.{Action, Controller}
-import models.Event
 import play.api.libs.json.Json
 import play.api.libs.concurrent.Execution.Implicits._
+import play.api.mvc.{Action, Controller}
+import models.Event
 
 /**
  * Created by Norman on 02.04.14.

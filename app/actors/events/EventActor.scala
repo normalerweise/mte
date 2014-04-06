@@ -14,6 +14,7 @@ import play.api.Logger
 import models.Event
 import models.EventJsonConverter._
 import models.EventTypes._
+import reactivemongo.bson.BSONObjectID
 
 
 case class Connect()
@@ -49,7 +50,7 @@ object EventLogger {
     default ! e
   }
 
-  def raiseExceptionEvent(ex: Throwable) = {
+  def raiseExceptionEvent(ex: Throwable)(implicit extractionRunId: Option[BSONObjectID] = None) = {
     val exceptionJson = Json.obj(
       "type" -> ex.getClass.getCanonicalName,
       "message" -> ex.getMessage,

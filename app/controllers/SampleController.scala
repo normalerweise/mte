@@ -1,36 +1,78 @@
 package controllers
 
+import scala.util.{Success, Failure, Random}
+import scala.concurrent.duration._
+import scala.concurrent.future
 import play.api.mvc.{Action, Controller}
 import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.concurrent.Akka
 import play.api.libs.json.Json
-import scala.util.Random
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import models.Event
+import models.{Event, ExtractionRun}
 import models.EventTypes._
 import actors.events.EventLogger
-import play.api.libs.concurrent.Akka
+import models.ExtractionRunJsonConverter._
+import play.api.Logger
+import scala.io.Source
 
-
-/**
- * Created by Norman on 20.03.14.
- */
 object SampleController extends Controller {
 
-  def generateSample(size: Int) = Action { request =>
+  def generateSample(size: Int, extractionRunId: String) = Action {
+      Akka.system.scheduler.scheduleOnce(100 microseconds) {
+        val extractionRun = ExtractionRun.getById(extractionRunId)
 
+        val sampleResources = future {
+          val companies = Helper.readCompanyResourceUris
+          val sample = size match {
+            case size if size <= 0 => companies
+            case size if size < companies.size => Random.shuffle(companies).take(size)
+            case size if size >= companies.size => companies
+          }
+          sample
+        }
+
+        val savedRunSample = for {
+          runOption <- extractionRun
+          run = runOption.get if runOption.isDefined
+          resources <- sampleResources
+          updatedRun = run.copyWithResources(resources)
+          saveResult <- ExtractionRun.save(updatedRun)
+        } yield updatedRun
+
+        savedRunSample.onComplete {
+          case Success(updatedRun) => EventLogger raise Event(generatedSample)(Some(updatedRun.id))
+          case Failure(t) => EventLogger.raiseExceptionEvent(t)
+        }
+      }
+      Ok
+  }
+
+  def generateSampleFromFile(extractionRunId: String) = Action { request =>
     Akka.system.scheduler.scheduleOnce(100 microseconds) {
-      val companies = Helper.readCompanyResourceUris
+      val multipartBody = request.body.asMultipartFormData.get;
+      val extractionRunId = multipartBody.dataParts.get("extractionRunId").get.mkString("")
 
-      val randomCompanies = size match {
-        case size if size <= 0 => companies
-        case size if size < companies.size => Random.shuffle(companies).take(size)
-        case size if size >= companies.size => companies
+      val extractionRun = ExtractionRun.getById(extractionRunId)
+
+      val sampleResources = future {
+        val fileRef = multipartBody.files.head.ref
+        val resources = Source.fromFile(fileRef.file).getLines().toList
+        resources
       }
 
-      Helper.writeRandomSampleFile(randomCompanies)
-      EventLogger.raise(Event(generatedSample))
+      val savedRunSample = for {
+        runOption <- extractionRun
+        run = runOption.get if runOption.isDefined
+        resources <- sampleResources
+        updatedRun = run.copyWithResources(resources)
+        saveResult <- ExtractionRun.save(updatedRun)
+      } yield updatedRun
+
+      savedRunSample.onComplete {
+        case Success(updatedRun) => EventLogger raise Event(generatedSample)(Some(updatedRun.id))
+        case Failure(t) => EventLogger.raiseExceptionEvent(t)
+      }
     }
     Ok
   }

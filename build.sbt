@@ -19,6 +19,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "angular-moment" % "0.6.2",
   "org.webjars" % "momentjs" % "2.5.1-1",
   "org.dbpedia.extraction" % "core" % "4.0-SNAPSHOT",
+  "de.unihd.dbs" % "heideltime-standalone" % "1.5",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.3.1",
   "org.apache.jena" % "jena-arq" % "2.11.1" excludeAll(ExclusionRule(organization = "org.slf4j", name="slf4j-log4j12")),
   "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
 )     
@@ -51,3 +53,4 @@ play.Project.playScalaSettings
 //// Set a custom image name
 //imageName in docker <<= (organization, name, version) map
 //  ((organization, name, version) => s"$organization/$name:v$version")
+

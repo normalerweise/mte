@@ -49,69 +49,113 @@ controllers.MyCtrl1 = function($scope, $http, $loading, toaster) {
 controllers.MyCtrl1.$inject = ['$scope', '$http', '$loading', 'toaster'];
 
 
-controllers.MyCtrl2 = function($scope, $http, $loading, toaster) {
-  $scope.sample = {
+controllers.MyCtrl2 = function($scope, $http, $loading, $filter, toaster, ngTableParams) {
+
+  $scope.formData = {
     size: 100,
-    elements: []
   };
 
-  $scope.getSample = function(){
-     $loading.start('sample');
-     $http.get('/api/v1/sample').success(function(sample){
-       $scope.sample.elements = sample;
-       $loading.finish('sample');
-     });
-  };
+      $scope.tableParams = new ngTableParams({
+              page: 1,            // show first page
+              count: 10,          // count per page
+              sorting: {
+                  createdOn: 'desc'     // initial sorting
+              }
+          }, {
+              total: $scope.extractionRun.resources.length, // length of data
+              getData: function ($defer, params) {
+                  // use build-in angular filter
+                  var filteredData = params.filter() ?
+                          $filter('filter')($scope.extractionRun.resources, params.filter()) :
+                          $scope.extractionRun.resources;
+                  var orderedData = params.sorting() ?
+                          $filter('orderBy')(filteredData, params.orderBy()) :
+                          filteredData;
 
-  $scope.generateSample = function(){
-    $http.get('/api/v1/sample/generate',{ params: {size: $scope.sample.size} }).success(function(sample){
-      $loading.start('dbPediaCompanies');
+                  params.total(orderedData.length); // set total for recalc pagination
+                  $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+              }
+          });
+
+   $scope.uploadComplete = function (content) {
+      $loading.start('sample');
+      toaster.pop('success', "Generate Sample", "Uploaded resource file!", 3000);
+   };
+
+
+  $scope.generateCompanySample = function(){
+    $http.get('/api/v1/sample/company/generate',{ params: {size: $scope.formData.size, extractionRunId: $scope.extractionRun._id} }).success(function(sample){
+      $loading.start('sample');
       toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
       // simply reset -> new data will be received later
-      $scope.sample.elements = [];
+      //$scope.sample.elements = [];
     });
   };
 
   $scope.$on('serverEvent:generatedSample', function() {
-    $scope.getSample();
+    $scope.updateExtractionRun();
+  });
+
+  $scope.$on('event:updatedExtractionRun', function() {
+     $scope.tableParams.reload();
+     $loading.finish('sample');
   });
 
   $scope.$on('serverEvent:exception', function() {
     $loading.finish('sample');
   });
 
-  $scope.currentPage = 0;
-  $scope.pageSize = 100;
-  $scope.numberOfPages= function() {
-    return Math.ceil($scope.sample.elements.length/$scope.pageSize);
-  };
-
-  // execute on init
-  $scope.getSample();
-
 }
-controllers.MyCtrl2.$inject = ['$scope', '$http', '$loading', 'toaster'];
+controllers.MyCtrl2.$inject = ['$scope', '$http', '$loading', '$filter', 'toaster', 'ngTableParams'];
 
-controllers.MyCtrl3 = function($scope, $http, $loading, toaster) {
+controllers.MyCtrl3 = function($scope, $http, $loading, toaster, ngTableParams, $filter) {
+    var data = [];
+
+    $scope.tableParams = new ngTableParams({
+            page: 1,            // show first page
+            count: 10,          // count per page
+            sorting: {
+                createdOn: 'desc'     // initial sorting
+            }
+        }, {
+            total: data.length, // length of data
+            getData: function ($defer, params) {
+                // use build-in angular filter
+                var filteredData = params.filter() ?
+                        $filter('filter')(data, params.filter()) :
+                        data;
+                var orderedData = params.sorting() ?
+                        $filter('orderBy')(filteredData, params.orderBy()) :
+                        filteredData;
+
+                params.total(orderedData.length); // set total for recalc pagination
+                $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+            }
+        });
+
 
   $scope.downloadSample = function(){
-    $http.get('/api/v1/sample/download').success(function(returnStatement){
+    var id = $scope.extractionRunId()
+    $http.get('/api/v1/extractionruns/' + id + '/download').success(function(returnStatement){
       $scope.alert = "Started to download files: Press 'List' to update the view ";
     });
   };
 
+    $scope.updateData = function(){
+      $http.get('/api/v1/pages/download').success(function(returnStatement){
+        $scope.alert = "Started to update all pages";
+      });
+    };
+
   $scope.listDownloadedData = function(){
+     var id = $scope.extractionRunId();
      $loading.start('downloadedData');
-     $http.get('/api/v1/pages').success(function(data){
-       $scope.data = data;
+     $http.get('/api/v1/extractionruns/' + id + '/page-data').success(function(ddata){
+       data = ddata;
+       $scope.dataLength = data.length;
+       $scope.tableParams.reload();
        $loading.finish('downloadedData');
      });
-  };
-
-  $scope.listDownloadedSampleData = function(){
-    $http.get('/api/v1/sample/revdata').success(function(sample){
-      $scope.sample = sample;
-    });
   };
 
   $scope.$on('serverEvent:exception', function() {
@@ -121,35 +165,96 @@ controllers.MyCtrl3 = function($scope, $http, $loading, toaster) {
    $scope.listDownloadedData()
 
 }
-controllers.MyCtrl3.$inject = ['$scope', '$http', '$loading', 'toaster'];
+controllers.MyCtrl3.$inject = ['$scope', '$http', '$loading', 'toaster', 'ngTableParams', '$filter'];
 
-controllers.MyCtrl4 = function($scope, $http) {
+controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter) {
+   var sample = [];
+    $scope.tableParams = new ngTableParams({
+            page: 1,            // show first page
+            count: 10,          // count per page
+            sorting: {
+                createdOn: 'desc'     // initial sorting
+            }
+        }, {
+            total: sample.length, // length of data
+            getData: function ($defer, params) {
+                // use build-in angular filter
+                var filteredData = params.filter() ?
+                        $filter('filter')(sample, params.filter()) :
+                        sample;
+                var orderedData = params.sorting() ?
+                        $filter('orderBy')(filteredData, params.orderBy()) :
+                        filteredData;
+
+                params.total(orderedData.length); // set total for recalc pagination
+                $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+            }
+        });
+
 
   $scope.extractSample = function(){
-    $http.get('/api/v1/sample/extract').success(function(returnStatement){
+    var id = $scope.extractionRunId();
+    $http.get('/api/v1/extractionruns/' + id + '/infobox-extraction').success(function(returnStatement){
       $scope.alert = "Started to extract files: Press 'List' to update the view ";
     });
   };
 
   $scope.listExtractedData = function(){
-     $http.get('/api/v1/sample/extrdata').success(function(sample){
-       $scope.sample = sample;
+     var id = $scope.extractionRunId();
+     $http.get('/api/v1/extractionruns/' + id + '/list-results').success(function(newSample){
+       sample = newSample;
+       $scope.sampleSize = sample.length
+       $scope.tableParams.reload();
      });
   };
 
-}
-controllers.MyCtrl4.$inject = ['$scope', '$http'];
+  $scope.listExtractedData();
 
-controllers.MyCtrl5 = function($scope, $http) {
+}
+controllers.MyCtrl4.$inject = ['$scope', '$http','ngTableParams', '$filter'];
+
+controllers.MyCtrl5 = function($scope, $http, ngTableParams, $filter, $loading) {
+  var statsPerPage = [];
+
+    $scope.tableParams = new ngTableParams({
+              page: 1,            // show first page
+              count: 10,          // count per page
+              sorting: {
+                  createdOn: 'desc'     // initial sorting
+              }
+          }, {
+              total: statsPerPage.length, // length of data
+              getData: function ($defer, params) {
+                  // use build-in angular filter
+                  var filteredData = params.filter() ?
+                          $filter('filter')(statsPerPage, params.filter()) :
+                          statsPerPage;
+                  var orderedData = params.sorting() ?
+                          $filter('orderBy')(filteredData, params.orderBy()) :
+                          filteredData;
+
+                  params.total(orderedData.length); // set total for recalc pagination
+                  $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+              }
+          });
+
 
   $scope.getSampleStats= function(){
-    $http.get('/api/v1/sample/stats').success(function(stats){
-      $scope.stats = stats;
+    var id = $scope.extractionRunId();
+    $loading.start('stats');
+    $http.get('/api/v1/extractionruns/' + id + '/stats').success(function(stats){
+      statsPerPage = stats.perPage
+      $scope.stats = stats.aggregated;
+      $scope.noOfPages = stats.noOfPages;
+      $scope.tableParams.reload();
+      $loading.finish('stats');
     });
   };
 
+  $scope.getSampleStats()
+
 }
-controllers.MyCtrl5.$inject = ['$scope', '$http'];
+controllers.MyCtrl5.$inject = ['$scope', '$http','ngTableParams', '$filter', '$loading'];
 
 controllers.Events = function($rootScope, $scope, $http, toaster) {
 
@@ -203,25 +308,151 @@ controllers.Events = function($rootScope, $scope, $http, toaster) {
 controllers.Events.$inject = ['$rootScope','$scope', '$http', 'toaster'];
 
 
+controllers.ExtractionCtrl= function($rootScope, $scope, $state, $stateParams, $location, $http) {
 
-controllers.SemistructuredExtraction= function($scope, $state) {
+  $scope.setExtractionRun = function(extractionRun) {
+    extractionRun.createdOnMomentCalendar = moment(extractionRun.createdOn).calendar();
+    angular.extend($scope.extractionRun, extractionRun);
+    $location.search('extractionRunId', $scope.extractionRun._id)
+    $rootScope.$broadcast('event:updatedExtractionRun', extractionRun);
+  };
 
-$scope.tabs = [
-  { state: 'overview', title: 'Overview' },
-  { state: 'queryDBpedia', title: 'Query' },
-  { state: 'generateSample', title: 'Sample' },
-  { state: 'downloadWikiRevisions', title: 'Download' },
-  { state: 'extract', title: 'Extract' },
-  { state: 'stats', title: 'Statistics' }
-]
+  $scope.setExtractionRunById = function(id) {
+    $http.get('/api/v1/extractionruns/' + id).success(function(run){
+      $scope.setExtractionRun(run)
+    });
+  };
 
-$scope.isActive = function(state) {
-  return $state.current.name == 'extraction.semistructured.' + state;
-};
+  $scope.updateExtractionRun = function() {
+    $scope.setExtractionRunById($scope.extractionRun._id)
+  };
+
+  $scope.extractionRunId = function() {
+      if($scope.extractionRun._id) {
+        return $scope.extractionRun._id
+      }else if($stateParams.extractionRunId){
+        return $stateParams.extractionRunId
+      }else{
+        return null
+      }
+    };
+
+
+  init();
+
+  function init() {
+    $scope.extractionRun = { resources: []};
+    if($stateParams.extractionRunId) {
+      $scope.setExtractionRunById($stateParams.extractionRunId);
+    }
+  }
 
 }
-controllers.SemistructuredExtraction.$inject = ['$scope', '$state'];
+controllers.ExtractionCtrl.$inject = ['$rootScope', '$scope', '$state', '$stateParams', '$location', '$http'];
 
+
+controllers.SemistructuredExtractionCtrl = function($scope, $state) {
+
+  $scope.tabs = [
+    { state: 'overview', title: 'Select Extraction Run' },
+    { state: 'generateSample', title: 'Select Resources' },
+    { state: 'downloadWikiRevisions', title: 'Download' },
+    { state: 'extract', title: 'Extract' },
+    { state: 'stats', title: 'Statistics' }
+  ]
+
+  $scope.isActive = function(state) {
+    return $state.current.name == 'extraction.semistructured.' + state;
+  };
+
+}
+controllers.SemistructuredExtractionCtrl.$inject = ['$scope', '$state'];
+
+
+controllers.DBpediaMasterdata = function($scope, $state) {
+
+  $scope.tabs = [
+    { state: 'queryCompanyResources', title: 'Query Company Resources' },
+  ]
+
+  $scope.isActive = function(state) {
+    return $state.current.name == 'masterdata.dbpedia.' + state;
+  };
+
+}
+controllers.DBpediaMasterdata.$inject = ['$scope', '$state'];
+
+controllers.ExtractionRunCtrl = function($scope, $state, $http, $loading, $filter, $q, toaster, ngTableParams) {
+  var extractionRuns = [];
+
+  $scope.formData = { description: 'New Extraction Run'}
+
+  $scope.tableParams = new ngTableParams({
+          page: 1,            // show first page
+          count: 10,          // count per page
+          sorting: {
+              createdOn: 'desc'     // initial sorting
+          }
+      }, {
+          total: extractionRuns.length, // length of data
+          getData: function ($defer, params) {
+              // use build-in angular filter
+              var filteredData = params.filter() ?
+                      $filter('filter')(extractionRuns, params.filter()) :
+                      extractionRuns;
+              var orderedData = params.sorting() ?
+                      $filter('orderBy')(filteredData, params.orderBy()) :
+                      filteredData;
+
+              params.total(orderedData.length); // set total for recalc pagination
+              $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+          }
+      });
+
+   $scope.getRuns = function(){
+       $loading.start('extractionRuns');
+       $http.get('/api/v1/extractionruns').success(function(runs){
+         angular.forEach(runs, function(run,key) {
+           parseData(run);
+         }),
+         extractionRuns = runs;
+         $scope.tableParams.reload();
+         $loading.finish('extractionRuns');
+       });
+    };
+
+  $scope.create = function(description) {
+   $http.post('/api/v1/extractionruns',{description: $scope.formData.description})
+     .success(function(extractionRun){
+        extractionRun = parseData(extractionRun);
+        $scope.setExtractionRun(extractionRun);
+        extractionRuns.push(extractionRun);
+        $scope.tableParams.reload();
+        toaster.pop('success', "Extraction Run", "Created Extraction Run!", 3000);
+      });
+  }
+
+  $scope.changeSelection = function(extractionRun) {
+    extractionRun.$selected = true;
+    $scope.setExtractionRun(extractionRun);
+    angular.forEach(extractionRuns, function(element){
+      if (element._id !== extractionRun._id) {
+        element.$selected = false;
+      }
+    });
+    toaster.pop('success', "Extraction Run", "Selected Extraction Run!", 3000);
+  }
+
+  function parseData(run) {
+    run.createdOnMomentCalendar = moment(run.createdOn).calendar();
+    return run;
+  }
+
+  // initial Load
+  $scope.getRuns()
+
+}
+controllers.ExtractionRunCtrl.$inject = ['$scope', '$state', '$http', '$loading',  '$filter', '$q', 'toaster', 'ngTableParams'];
 
 return controllers;
 

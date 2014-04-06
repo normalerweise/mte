@@ -1,25 +1,36 @@
-<div class="page-header">
+<!-- <div class="page-header">
     <h1>Download Article/Revisions of Sample Companies
         <small>todo</small>
     </h1>
-</div>
+</div> -->
 <div style="position:relative;">
-    <div dw-loading="downloadedData" dw-loading-options="{active: true, text: false}">
+    <div dw-loading="downloadedData" dw-loading-options="{active: false, text: false}">
 
         <p>
             <button class="btn btn-primary" ng-click="downloadSample()">Download Sample</button>
-            <button class="btn btn-default" ng-click="listDownloadedData()">Refresh List</button>
+           <!-- <button class="btn btn-primary" ng-click="updateData()">Update Data</button> -->
+           <button class="btn btn-default" ng-click="listDownloadedData()">Refresh List</button>
         </p>
         <br/><br/>
 
         <div>
-            <p>No of companies: {{ data.length }}</p>
-            <li ng-repeat="downloadedPage in data">
+            <p>No of companies: {{ dataLength }}</p>
+
+            <table ng-table="tableParams" show-filter="true" class="table">
+                <tr ng-repeat="page in $data">
+                    <td data-title="'Page Title'" sortable="'pageTitle'" filter="{ 'pageTitle': 'text' }">{{page.pageTitle}}</td>
+                    <td data-title="'Has data'" sortable="'hasDownloadedData'" filter="{ 'hasDownloadedData': 'text' }">{{page.hasDownloadedData}}</td>
+                    <td data-title="'Data'"><a ng-show="page.hasDownloadedData" target="_blank" href="/api/v1/pages/{{page.pageTitle}}/revs">display</a></td>
+                </tr>
+            </table>
+
+
+            <!--<li ng-repeat="downloadedPage in data">
                 <ul>
-                    <a target="_blank" href="/api/v1/pages/{{downloadedPage._id}}/revs">{{downloadedPage._id}}
-                        ({{downloadedPage.numberOfRevisions}})</a>
+                    <a target="_blank" href="/api/v1/pages/{{downloadedPage._id}}/revs">{{downloadedPage.pageTitle}}
+                        ({{downloadedPage.hasDownloadedData}})</a>
                 </ul>
-            </li>
+            </li>-->
         </div>
     </div>
 </div>

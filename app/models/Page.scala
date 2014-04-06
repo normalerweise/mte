@@ -1,6 +1,6 @@
 package models
 
-import play.api.libs.json.{JsPath, Writes}
+import play.api.libs.json.{Reads, JsPath, Writes}
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 
@@ -20,4 +20,10 @@ object PageJsonConverter {
     (JsPath \ "title").write[String] and
     (JsPath \ "uriTitle").write[String]
   )(unlift(Page.unapply))
+
+  implicit val mongoReads: Reads[Page] = (
+      (JsPath \ "_id").read[Long] and
+      (JsPath \ "title").read[String] and
+      (JsPath \ "uriTitle").read[String]
+    )(Page.apply _)
 }

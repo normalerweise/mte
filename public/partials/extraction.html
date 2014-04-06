@@ -1,4 +1,4 @@
-<h1>Extraction</h1>
+<h1>Extraction <span ng-show="extractionRun.description" style="font-size: 0.6em;color: #777;">{{extractionRun.description}} <span style="font-size: 0.8em">({{extractionRun.createdOnMomentCalendar}})</span></span></h1>
 <div class="row">
   <div class="col-sm-9" ui-view></div>
   <div if="events" class="col-sm-3 eventsStretchedToMargin" ui-view="events"></div>

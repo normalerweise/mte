@@ -1,11 +1,10 @@
-/**
- * Created by Norman on 20.03.14.
- */
 package controllers
 
 import scala.io.{Codec, Source}
-import play.api.libs.Files
 import java.io.File
+import play.api.libs.Files
+import play.api.Logger
+
 
 object Helper {
 
@@ -46,6 +45,7 @@ object Helper {
 
 
   def ensureExists(path: String) = {
+    Logger.info("ensure exists:" + path)
     val f = new File(path)
     if (!f.exists()) {
       f.getParentFile.mkdirs
