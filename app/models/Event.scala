@@ -8,20 +8,21 @@ import play.api.libs.iteratee.Enumeratee
 import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.core.commands._
 import play.api.libs.json.JsSuccess
-import play.modules.reactivemongo.json.collection.JSONCollection
 import scala.Some
 import reactivemongo.core.commands.SumValue
-import models.EventTypes.EventTypeValue
 import reactivemongo.core.commands.GroupField
-import reactivemongo.core.commands.AddToSet
 import play.modules.reactivemongo.json.BSONFormats
+import reactivemongo.api.indexes.Index
+import reactivemongo.api.indexes.IndexType.Descending
 
 
 object EventTypes extends Enumeration {
   type EventType = EventTypeValue
   case class EventTypeValue(name: String, description: String) extends Val(name)
-  val execPartialDBpdeiaCompanyQuery = EventTypeValue("execPartialDBpdeiaCompanyQuery","Executing Partial DBpedia Company Query")
-  val queriedDBpdeiaCompanies = EventTypeValue("queriedDBpdeiaCompanies","Finished Querying Companies from DBpedia")
+
+  val executePartialSparqlQuery = EventTypeValue("executePartialSparqlQuery","Executing Partial SPARQL Query")
+  val executedSparqlQuery = EventTypeValue("executedSparqlQuery","Executed SPARQL Query")
+
   val generatedSample = EventTypeValue("generatedSample", "Generated Sample")
   val updatedExtractionRun = EventTypeValue("updatedExtractionRun", "Updated Extraction Run")
   val downloadedPageRevisions = EventTypeValue("downloadedPageRevisions", "Downloaded Page Revisions")
@@ -31,6 +32,7 @@ object EventTypes extends Enumeration {
   val initializedInfoboxExtractor = EventTypeValue("initializedInfoboxExtractor", "Initialized Infobox extractor")
   val stoppedInfoboxExtractor = EventTypeValue("stoppedInfoboxExtractor", "Stopped Infobox extractor")
   val noRevisionDataFound = EventTypeValue("noRevisionDataFound", "No Revision Data found")
+  val unableToParseWikiContent = EventTypeValue("unableToParseWikiContent", "Unable To Parse Wiki Content")
   val exception = EventTypeValue("exception", "Exception Occured")
 
   def withNameOpt(str: String):Option[EventType] = {
@@ -49,6 +51,9 @@ object Event extends MongoModel {
   import EventJsonConverter._
 
   private def collection: JSONCollection = db.collection[JSONCollection]("events")
+
+  collection.indexesManager.ensure(Index(Seq(("timestamp", Descending)), Some("timestampIndex"),false,true,false,false))
+  collection.indexesManager.ensure(Index(Seq(("extractionRunId", Descending)), Some("extractionRunIdIndex"),false,true,false,false))
 
 
   def apply(typ: EventType)(implicit extractionRunId: Option[BSONObjectID]) =

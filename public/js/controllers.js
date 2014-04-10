@@ -8,28 +8,67 @@ define(function() {
 
 var controllers = {};
 
-controllers.MyCtrl1 = function($scope, $http, $loading, toaster) {
+controllers.MyCtrl1 = function($scope, $http, $loading, toaster, $state) {
   $scope.companyResourceUris = [];
+  $scope.settlementResourceUris = [];
+  $scope.americanFootballPlayerResourceUris = [];
 
   $scope.getCompanies = function(){
      $loading.start('dbPediaCompanies');
-     $http.get('/api/v1/companies').success(function(companies){
+     $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-company/cached-result ').success(function(companies){
        $scope.companyResourceUris = companies;
        $loading.finish('dbPediaCompanies');
      });
   };
 
+    $scope.getSettlements = function(){
+       $loading.start('dbPediaCompanies');
+       $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-settlement/cached-result ').success(function(settlements){
+         $scope.settlementResourceUris = settlements;
+         $loading.finish('dbPediaCompanies');
+       });
+    };
+
+        $scope.getAmericanFootballPlayers = function(){
+           $loading.start('dbPediaCompanies');
+           $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-americanfootballplayer/cached-result ').success(function(players){
+             $scope.americanFootballPlayerResourceUris = players;
+             $loading.finish('dbPediaCompanies');
+           });
+        };
+
   $scope.queryCompanies = function(){
-    $http.get('/api/v1/query/dbpedia/companies').success(function(){
+    $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-company/trigger').success(function(){
       $loading.start('dbPediaCompanies');
-      toaster.pop('success', "Company Query", "Triggered company query!", 3000);
+      toaster.pop('success', "Query", "Triggered company query!", 3000);
       // simply reset -> new data will be received later
       $scope.companyResourceUris = [];
     });
   };
 
-  $scope.$on('serverEvent:queriedDBpdeiaCompanies', function() {
-    $scope.getCompanies();
+    $scope.querySettlements = function(){
+      $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-settlement/trigger').success(function(){
+        $loading.start('dbPediaCompanies');
+        toaster.pop('success', "Query", "Triggered settlement query!", 3000);
+        // simply reset -> new data will be received later
+        $scope.settlementResourceUris = [];
+      });
+    };
+
+        $scope.queryAmericanFootballPlayers = function(){
+          $http.get('/api/v1/sparql/query/predefined/resources-of-type-dbpedia-americanfootballplayer/trigger').success(function(){
+            $loading.start('dbPediaCompanies');
+            toaster.pop('success', "Query", "Triggered AmericanFootballPlayer query!", 3000);
+            // simply reset -> new data will be received later
+            $scope.americanFootballPlayerResourceUris = [];
+          });
+        };
+
+  $scope.$on('serverEvent:executedSparqlQuery', function(event) {
+    if(event.details.queryId = 'resources-of-type-dbpedia-company')
+      $scope.getCompanies();
+    else if(event.details.queryId = 'resources-of-type-dbpedia-settlement')
+      $scope.getSettlements();
   });
 
   $scope.$on('serverEvent:exception', function() {
@@ -43,10 +82,18 @@ controllers.MyCtrl1 = function($scope, $http, $loading, toaster) {
   };
 
   // execute on init
-  $scope.getCompanies();
+  if($state.current.url === "/query-company-resources") {
+    $scope.getCompanies();
+  }else if($state.current.url === "/query-settlement-resources") {
+    $scope.getSettlements();
+  }else if($state.current.url === "/query-americanfootballplayer-resources") {
+       $scope.getAmericanFootballPlayers();
+     }else{
+     console.error("unknown get for state: " + $state.current.url)
+     }
 
 }
-controllers.MyCtrl1.$inject = ['$scope', '$http', '$loading', 'toaster'];
+controllers.MyCtrl1.$inject = ['$scope', '$http', '$loading', 'toaster', '$state'];
 
 
 controllers.MyCtrl2 = function($scope, $http, $loading, $filter, toaster, ngTableParams) {
@@ -84,13 +131,37 @@ controllers.MyCtrl2 = function($scope, $http, $loading, $filter, toaster, ngTabl
 
 
   $scope.generateCompanySample = function(){
-    $http.get('/api/v1/sample/company/generate',{ params: {size: $scope.formData.size, extractionRunId: $scope.extractionRun._id} }).success(function(sample){
-      $loading.start('sample');
-      toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
+    var extractionRunId = $scope.extractionRunId();
+    $http.get('/api/v1/extractionruns/' + extractionRunId + '/resources-random-sample',
+      { params: {size: $scope.formData.size, queryId: 'resources-of-type-dbpedia-company'} }).success(function(sample){
+        $loading.start('sample');
+        toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
       // simply reset -> new data will be received later
       //$scope.sample.elements = [];
     });
   };
+
+    $scope.generateSettlementSample = function(){
+      var extractionRunId = $scope.extractionRunId();
+      $http.get('/api/v1/extractionruns/' + extractionRunId + '/resources-random-sample',
+        { params: {size: $scope.formData.size, queryId: 'resources-of-type-dbpedia-settlement'} }).success(function(sample){
+          $loading.start('sample');
+          toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
+        // simply reset -> new data will be received later
+        //$scope.sample.elements = [];
+      });
+    };
+
+        $scope.generateAmericanFootballPlayerSample = function(){
+          var extractionRunId = $scope.extractionRunId();
+          $http.get('/api/v1/extractionruns/' + extractionRunId + '/resources-random-sample',
+            { params: {size: $scope.formData.size, queryId: 'resources-of-type-dbpedia-americanFootballplayer'} }).success(function(sample){
+              $loading.start('sample');
+              toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
+            // simply reset -> new data will be received later
+            //$scope.sample.elements = [];
+          });
+        };
 
   $scope.$on('serverEvent:generatedSample', function() {
     $scope.updateExtractionRun();
@@ -373,6 +444,8 @@ controllers.DBpediaMasterdata = function($scope, $state) {
 
   $scope.tabs = [
     { state: 'queryCompanyResources', title: 'Query Company Resources' },
+    { state: 'querySettlementResources', title: 'Query Settlement Resources' },
+    { state: 'queryAmericanFootballPlayerResources', title: 'Query American Football Player Resources' }
   ]
 
   $scope.isActive = function(state) {

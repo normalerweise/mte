@@ -21,18 +21,18 @@ object DefaultActors {
 
   lazy val supervisor = Akka.system.actorOf(Props[MteSupervisor])
 
-  lazy val dbPedia = Await.result( supervisor ? Props[DBpediaActor] map{ case a: ActorRef => a}, 1 second)
+  lazy val dbPedia = Await.result( supervisor ? Props[DBpediaSparqlEndpointActor] map{ case a: ActorRef => a}, 1 second)
 
   lazy val pageDownloader = Await.result(
     supervisor ? Props[PageDownloaderActor].withRouter(RoundRobinRouter(nrOfInstances = 3))
       map{ case a: ActorRef => a}, 1 second)
 
 
-  private val resizer = DefaultResizer(lowerBound = 1, upperBound = 8, messagesPerResize = 5)
-  private val router = RoundRobinRouter(nrOfInstances = 8).withResizer(resizer)
+  private val resizer = DefaultResizer(lowerBound = 1, upperBound = 6, messagesPerResize = 5)
+  private val router = RoundRobinRouter(nrOfInstances = 6).withResizer(resizer)
   lazy val infoboxExtractor = Await.result(
     supervisor ? Props[TemporalInfoboxExtractorActor].withRouter(router)
-      map{ case a: ActorRef => a}, 1 second)
+      map{ case a: ActorRef => a}, 10 seconds)
 
 
 }

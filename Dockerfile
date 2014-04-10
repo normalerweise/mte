@@ -24,15 +24,20 @@ RUN cd /tmp ; dpkg -i /fuse.deb
 # Actually install java	
 RUN apt-get install -y openjdk-7-jre
 
-ADD ./target/universal/mte-1.0-SNAPSHOT.zip /opt/
-RUN unzip /opt/mte-1.0-SNAPSHOT.zip -d /opt/mte
 
-ADD ./resources /opt/mte/mte-1.0-SNAPSHOT/resources/
+# Install APP
+ADD ./target/universal/stage /opt/mte
+ADD ./resources /opt/mte/resources/
 
-VOLUME ["/opt/mte/mte-1.0-SNAPSHOT/data"]
+ENV JAVA_OPTS -Xms3096M -Xmx6192M -XX:MaxPermSize=256M -XX:ReservedCodeCacheSize=128M
+VOLUME ["/opt/mte/data"]
 
+# APP port
 EXPOSE 9000
 
-CMD cd /opt/mte/mte-1.0-SNAPSHOT && chmod +x ./bin/mte && ./bin/mte
-#ENTRYPOINT /opt/mte/mte-1.0-SNAPSHOT/bin/mte
+# Debugging port
+EXPOSE 5111
+
+CMD cd /opt/mte && chmod +x ./bin/mte && ./bin/mte -J-server -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=5111 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=134.155.85.156 -Dcom.sun.management.jmxremote.local.only=false
+
 

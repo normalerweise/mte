@@ -1,0 +1,39 @@
+
+<div style="position:relative;">
+    <div dw-loading="dbPediaCompanies" dw-loading-options="{active: true, text: false}">
+        <div class="btn-group">
+            <button class="btn btn-primary" ng-click="querySettlements()">Query/Update Settlement from DBpedia</button>
+        </div>
+        <br/><br/>
+
+        <div>
+            <p>No of settlements: {{ settlementResourceUris.length }}</p>
+            <br/>
+
+            <!-- TODO: <ul class="pagination">
+                 <li ng-class="{disabled: currentPage == 0}"><a ng-click="currentPage=currentPage-1">&laquo;</a></li>
+                <li ng-repeat="num in [currentPage-2,currentPage-1,currentPage+1,currentPage+2,currentPage+3]" ng-class="{active: 'currentPage == num'}"><a>{{num}}</a></li>
+                <li ng-class="{disabled: 'currentPage >= companyResourceUris.length/pageSize - 1'}"><a ng-click="currentPage=currentPage+1" >&raquo;</a></li>
+            </ul>-->
+
+
+            <div>
+                <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                    Previous
+                </button>
+                {{currentPage+1}}/{{numberOfPages()}}
+                <button ng-disabled="currentPage >= companyResourceUris.length/pageSize - 1"
+                        ng-click="currentPage=currentPage+1">
+                    Next
+                </button>
+            </div>
+            <br/>
+            <li ng-repeat="settlement in settlementResourceUris | startFrom:currentPage*pageSize | limitTo:pageSize">
+                <ul>
+                    <a href="{{settlement}}">{{settlement}}</a>
+                </ul>
+            </li>
+        </div>
+    </div>
+</div>
+

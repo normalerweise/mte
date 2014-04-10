@@ -8,6 +8,7 @@ import akka.actor.OneForOneStrategy
 import play.api.Logger
 import extractors.QueryResultParserException
 import models.RevisionException
+import java.io.IOException
 
 
 /**
@@ -29,6 +30,12 @@ class MteSupervisionStrategy extends SupervisorStrategyConfigurator {
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: RevisionException =>
+        EventLogger.raiseExceptionEvent(ex)
+        Restart
+      case ex: IOException =>
+        EventLogger.raiseExceptionEvent(ex)
+        Restart
+      case ex: reactivemongo.core.errors.GenericDriverException =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: Exception =>

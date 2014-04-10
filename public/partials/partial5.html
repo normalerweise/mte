@@ -25,27 +25,27 @@
                 <tr>
                     <td>Revenue Years</td>
                     <td>{{ stats.revenue._3years }}({{ stats.revenue._3yearsRel }})</td>
-                    <td>{{ stats.revenue._3years }}({{ stats.revenue._5yearsRel }})</td>
+                    <td>{{ stats.revenue._5years }}({{ stats.revenue._5yearsRel }})</td>
                 </tr>
                 <tr>
                     <td>OperatingIncomeYears</td>
                     <td>{{ stats.operatingIncome._3years }}({{ stats.operatingIncome._3yearsRel }})</td>
-                    <td>{{ stats.operatingIncome._3years }}({{ stats.operatingIncome._5yearsRel }})</td>
+                    <td>{{ stats.operatingIncome._5years }}({{ stats.operatingIncome._5yearsRel }})</td>
                 </tr>
                 <tr>
                     <td>NetIncomeYears</td>
                     <td>{{ stats.netIncome._3years }}({{ stats.netIncome._3yearsRel }})</td>
-                    <td>{{ stats.netIncome._3years }}({{ stats.netIncome._5yearsRel }})</td>
+                    <td>{{ stats.netIncome._5years }}({{ stats.netIncome._5yearsRel }})</td>
                 </tr>
                 <tr>
                     <td>TotalAssetsYears</td>
                     <td>{{ stats.assets._3years }}({{ stats.assets._3yearsRel }})</td>
-                    <td>{{ stats.assets._3years }}({{ stats.assets._5yearsRel }})</td>
+                    <td>{{ stats.assets._5years }}({{ stats.assets._5yearsRel }})</td>
                 </tr>
                 <tr>
                     <td>TotalEquityIncreaseYears</td>
                     <td>{{ stats.equity._3years }}({{ stats.equity._3yearsRel }})</td>
-                    <td>{{ stats.equity._3years }}({{ stats.equity._5yearsRel }})</td>
+                    <td>{{ stats.equity._5years }}({{ stats.equity._5yearsRel }})</td>
                 </tr>
                 <tr>
                     <td>EmployeeYears</td>
@@ -57,13 +57,13 @@
             <p>Figures in number of different years</p>
             <table ng-table="tableParams" show-filter="true" class="table">
                 <tr ng-repeat="page in $data">
-                    <td data-title="'Page Title'" sortable="'uriTitle'" filter="{ 'pageName': 'text' }">{{page.pageName}}</td>
-                    <td data-title="'Equity'" sortable="'equity'">{{page.equity.numberOfYears}}</td>
-                    <td data-title="'OperatingIncome'" sortable="'operatingIncome'">{{page.operatingIncome.numberOfYears}}</td>
-                    <td data-title="'NetIncome'" sortable="'netIncome'">{{page.netIncome.numberOfYears}}</td>
-                    <td data-title="'Revenue'" sortable="'revenue'">{{page.revenue.numberOfYears}}</td>
-                    <td data-title="'Assets'" sortable="'assets'">{{page.assets.numberOfYears}}</td>
-                    <td data-title="'Number Of Employees'" sortable="'numberOfEmployees'">{{page.numberOfEmployees.numberOfYears}}</td>
+                    <td data-title="'Page Title'" sortable="'uriTitle'" filter="{ 'pageName': 'text' }"><a target="_blank" href="/api/v1/pages/{{page.pageName}}/results?extractionRunId={{extractionRunId()}}">{{page.pageName}}</a></td>
+                    <td data-title="'Equity'" sortable="'equity.numberOfYears || 0'">{{page.equity.numberOfYears || 0 }}</td>
+                    <td data-title="'Operating Income'" sortable="'operatingIncome.numberOfYears || 0'">{{page.operatingIncome.numberOfYears || 0 }}</td>
+                    <td data-title="'Net Income'" sortable="'netIncome.numberOfYears || 0'">{{page.netIncome.numberOfYears || 0 }}</td>
+                    <td data-title="'Revenue'" sortable="'revenue.numberOfYears || 0'">{{page.revenue.numberOfYears || 0 }}</td>
+                    <td data-title="'Assets'" sortable="'assets.numberOfYears || 0'">{{page.assets.numberOfYears || 0 }}</td>
+                    <td data-title="'Number Of Employees'" sortable="'numberOfEmployees.numberOfYears || 0'">{{page.numberOfEmployees.numberOfYears || 0 }}</td>
                 </tr>
             </table>
 

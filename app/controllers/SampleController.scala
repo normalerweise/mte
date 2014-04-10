@@ -18,16 +18,17 @@ import scala.io.Source
 
 object SampleController extends Controller {
 
-  def generateSample(size: Int, extractionRunId: String) = Action {
+  def generateRandomSampleForPredefinedQueryResults(size: Int, extractionRunId: String, queryId: String) = Action {
+      import FileUtil._
       Akka.system.scheduler.scheduleOnce(100 microseconds) {
         val extractionRun = ExtractionRun.getById(extractionRunId)
 
         val sampleResources = future {
-          val companies = Helper.readCompanyResourceUris
+          val resources = readFileOneElementPerLine(cacheFilePathForQueryId(queryId))
           val sample = size match {
-            case size if size <= 0 => companies
-            case size if size < companies.size => Random.shuffle(companies).take(size)
-            case size if size >= companies.size => companies
+            case size if size <= 0 => resources
+            case size if size < resources.size => Random.shuffle(resources).take(size)
+            case size if size >= resources.size => resources
           }
           sample
         }
@@ -48,7 +49,7 @@ object SampleController extends Controller {
       Ok
   }
 
-  def generateSampleFromFile(extractionRunId: String) = Action { request =>
+  def generateSampleFromFile = Action { request =>
     Akka.system.scheduler.scheduleOnce(100 microseconds) {
       val multipartBody = request.body.asMultipartFormData.get;
       val extractionRunId = multipartBody.dataParts.get("extractionRunId").get.mkString("")
@@ -75,13 +76,6 @@ object SampleController extends Controller {
       }
     }
     Ok
-  }
-
-  def getSampleFromFile = Action.async {
-    val futureCompanies = scala.concurrent.Future {
-      Helper.readRandomSample
-    }
-    futureCompanies.map(companies => Ok(Json.toJson(companies)))
   }
 
 }

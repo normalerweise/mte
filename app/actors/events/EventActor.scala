@@ -53,8 +53,7 @@ object EventLogger {
   def raiseExceptionEvent(ex: Throwable)(implicit extractionRunId: Option[BSONObjectID] = None) = {
     val exceptionJson = Json.obj(
       "type" -> ex.getClass.getCanonicalName,
-      "message" -> ex.getMessage,
-      "stackTrace" -> ex.getStackTrace.toString
+      "message" -> ex.getMessage
     )
     raise(Event(exception, ex.getClass.getCanonicalName +": " + ex.getMessage, exceptionJson))
     exceptionJson

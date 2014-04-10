@@ -9,7 +9,6 @@ import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.core.commands.GroupField
 import scala.Some
 import reactivemongo.core.commands.AddToSet
-import models.Quad
 
 //import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.functional.syntax._

@@ -1,44 +1,109 @@
 package controllers
 
-import scala.concurrent.duration._
-import akka.pattern.ask
+import scala.concurrent.future
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
-
-import actors.events.EventLogger
-import actors.{QueriedCompanies, QueryCompanies}
-import models.Event
-import models.EventTypes._
+import actors.PredefinedQuery
 
 
-/**
- * Created by Norman on 19.03.14.
- */
 object SparqlController extends Controller {
 
   import actors.DefaultActors._
 
-  def queryCompaniesFromDBpedia = Action {
-    Akka.system.scheduler.scheduleOnce(100 microseconds) {
-      dbPedia ? QueryCompanies onSuccess {
-        case result: QueriedCompanies =>
-          Helper.writeCompanyResourcesFile(result.companyUris)
-          EventLogger raise Event(queriedDBpdeiaCompanies)(None)
+  val resourcesOfTypeDBpediaCompany = PredefinedQuery("resources-of-type-dbpedia-company", (limit: Int, offset: Int) =>
+      s"""
+        PREFIX res: <http://dbpedia.org/ontology/>
+
+        SELECT distinct ?x
+        WHERE
+          {
+            {
+              SELECT DISTINCT ?x
+              WHERE
+                {
+                  ?x a res:Company
+                } ORDER BY ASC(?x)
+            }
+            FILTER NOT EXISTS
+             { ?x res:wikiPageRedirects ?y }
+          }
+        OFFSET ${offset}
+        LIMIT ${limit}
+      """)
+
+  val resourcesOfTypeDBpediaSettlement = PredefinedQuery("resources-of-type-dbpedia-settlement", (limit: Int, offset: Int) =>
+      s"""
+        PREFIX res: <http://dbpedia.org/ontology/>
+
+        SELECT distinct ?x
+        WHERE
+          {
+            {
+              SELECT DISTINCT ?x
+              WHERE
+                {
+                  ?x a res:Settlement
+                } ORDER BY ASC(?x)
+            }
+            FILTER NOT EXISTS
+             { ?x res:wikiPageRedirects ?y }
+          }
+        OFFSET ${offset}
+        LIMIT ${limit}
+      """)
+
+  val resourcesOfTypeDBpediaAmericanFootballPlayer = PredefinedQuery("resources-of-type-dbpedia-americanfootballplayer", (limit: Int, offset: Int) =>
+    s"""
+        PREFIX res: <http://dbpedia.org/ontology/>
+
+        SELECT distinct ?x
+        WHERE
+          {
+            {
+              SELECT DISTINCT ?x
+              WHERE
+                {
+                  ?x a res:AmericanFootballPlayer
+                } ORDER BY ASC(?x)
+            }
+            FILTER NOT EXISTS
+             { ?x res:wikiPageRedirects ?y }
+          }
+        OFFSET ${offset}
+        LIMIT ${limit}
+      """)
+
+
+  val predefinedQueries: Map[String, PredefinedQuery] = Map(
+    resourcesOfTypeDBpediaCompany.id -> resourcesOfTypeDBpediaCompany,
+    resourcesOfTypeDBpediaSettlement.id -> resourcesOfTypeDBpediaSettlement,
+    resourcesOfTypeDBpediaAmericanFootballPlayer.id -> resourcesOfTypeDBpediaAmericanFootballPlayer
+  )
+
+  def triggerPredefinedQueryExecution(queryId: String) = Action {
+    predefinedQueries.get(queryId) match {
+      case Some(predefinedQuery) =>
+        dbPedia ! predefinedQuery
+        Ok
+      case None => queryNotKnownResult(queryId)
+    }
+  }
+
+  def getCachedResultsForPredefinedQery(queryId: String) = Action.async {
+    import FileUtil._
+
+    predefinedQueries.get(queryId) match {
+      case Some(predefinedQuery) =>
+        val result = future {
+          readFileOneElementPerLine(cacheFilePathForQueryId(queryId))
+        }
+        result.map( result => Ok(Json.toJson(result)))
+      case None => future {
+        queryNotKnownResult(queryId)
       }
     }
-    Ok
   }
 
-
-  def getCompanieUrisFromFile = Action.async {
-    val futureCompanies = scala.concurrent.Future {
-      Helper.readCompanyResourceUris
-    }
-    futureCompanies.map(companies => Ok(Json.toJson(companies)))
-  }
-
-
+  private def queryNotKnownResult(queryId: String) = BadRequest(s"Query with id '$queryId' is not known")
 }

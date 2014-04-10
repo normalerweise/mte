@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   "de.unihd.dbs" % "heideltime-standalone" % "1.5",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.3.1",
   "org.apache.jena" % "jena-arq" % "2.11.1" excludeAll(ExclusionRule(organization = "org.slf4j", name="slf4j-log4j12")),
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2",
+  "com.kenshoo" %% "metrics-play" % "0.1.3"
 )     
 
 play.Project.playScalaSettings

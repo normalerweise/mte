@@ -65,6 +65,10 @@ object Revision extends MongoModel {
   def apply(id: Long, timestamp: DateTime, content: String) =
     new Revision(id, timestamp, new DateTime, "en", None, Some(content))
 
+  def apply(id: Long, timestamp: DateTime, page: Page, content: String) =
+    new Revision(id, timestamp, new DateTime, "en", Some(page), Some(content))
+
+
   def withoutContentFromWikiJson(js: JsObject) =
     js.validate[Revision](wikiJsonSparseDataReads).get
 
@@ -107,7 +111,7 @@ object Revision extends MongoModel {
 
   private def _getAllPages = {
     val gropu = GroupField("page.uriTitle")(
-      ("revisions", AddToSet("$_id")),
+ //     ("revisions", AddToSet("$_id")),
       ("numberOfRevisions", SumValue(1))
     )
     val command = Aggregate("revisions", Seq( gropu ))

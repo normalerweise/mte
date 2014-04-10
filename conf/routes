@@ -14,6 +14,9 @@ GET /api/v1/events                          controllers.Application.connectEvent
 GET  /api/v1/extractionruns                         controllers.ExtractionRunController.listAsJson
 POST /api/v1/extractionruns                         controllers.ExtractionRunController.create
 
+GET  /api/v1/extractionruns/:extractionRunId/resources-random-sample  controllers.SampleController.generateRandomSampleForPredefinedQueryResults(size: Int, extractionRunId, queryId)
+POST /api/v1/extractionruns/resources-from-file                       controllers.SampleController.generateSampleFromFile
+
 GET  /api/v1/extractionruns/extraction-results      controllers.ExtractionResultsController.getAll
 GET  /api/v1/extractionruns/:id                     controllers.ExtractionRunController.getById(id)
 GET  /api/v1/extractionruns/:id/download            controllers.PageController.downloadResourcesOfExtractionRun(id)
@@ -25,14 +28,10 @@ GET  /api/v1/extractionruns/:id/stats               controllers.ExtractionResult
 GET  /api/v1/extractionruns/:id/event-stats         controllers.ExtractionResultsController.getExtractionRunEventStats(id)
 
 
-
 # SPARQL Queries
-GET /api/v1/query/dbpedia/companies                 controllers.SparqlController.queryCompaniesFromDBpedia()
-GET /api/v1/companies                               controllers.SparqlController.getCompanieUrisFromFile()
+GET /api/v1/sparql/query/predefined/:id/trigger       controllers.SparqlController.triggerPredefinedQueryExecution(id)
+GET /api/v1/sparql/query/predefined/:id/cached-result controllers.SparqlController.getCachedResultsForPredefinedQery(id)
 
-GET  /api/v1/sample                                 controllers.SampleController.getSampleFromFile()
-GET  /api/v1/sample/company/generate                controllers.SampleController.generateSample(size: Int, extractionRunId: String)
-POST /api/v1/sample/from-file                       controllers.SampleController.generateSampleFromFile(extractionRunId: String)
 
 #GET /api/v1/sample/extract                         controllers.ExtractorController.extractSample()
 #GET /api/v1/sample/extrdata                        controllers.ExtractorController.listExtractedData()
@@ -56,6 +55,7 @@ GET /api/v1/events/latest                           controllers.EventsController
 #GET /test/create/:name controllers.MongoTest.create(name)
 #GET /test/list controllers.MongoTest.list
 GET  /admin/config                       controllers.Application.config
+GET  /admin/metrics                      com.kenshoo.play.metrics.MetricsController.metrics
 
 
 # Map the JS resource paths

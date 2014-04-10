@@ -3,10 +3,9 @@ package extractors
 import de.unihd.dbs.heideltime.standalone.HeidelTimeStandalone
 import de.unihd.dbs.uima.annotator.heideltime.resources.Language
 import de.unihd.dbs.heideltime.standalone.{ DocumentType, OutputType }
-import org.dbpedia.extraction.wikiparser.Node
+import org.dbpedia.extraction.wikiparser.{TableNode, TextNode, Node, TemplateNode}
 import org.dbpedia.extraction.dataparser.{ DataParser, StringParser }
 import scala.xml.XML
-import org.dbpedia.extraction.wikiparser.TemplateNode
 import de.unihd.dbs.heideltime.standalone.POSTagger
 import org.apache.uima.resource.metadata.TypeSystemDescription
 import org.apache.uima.UIMAFramework
@@ -18,6 +17,8 @@ import java.util.Properties
 import de.unihd.dbs.heideltime.standalone.components.PartOfSpeechTagger
 import scala.Some
 import ch.weisenburger.dbpedia.extraction.mappings.RuntimeAnalyzer
+import scala.util.matching.Regex.Match
+import org.dbpedia.extraction.util.WikiUtil
 
 object AdvancedTimexParser {
   HeidelTimeStandalone.readConfigFile("resources/config.props")
@@ -91,14 +92,14 @@ class AdvancedTimexParser extends DataParser {
   }
 
   override def parse(node: Node, templateNode: String): Option[Any] = {
-    val stringResult = StringParser.parse(node)
+    val stringResult = CustomStringParser.parse(node)
     stringResult match {
       case Some(str) => parseDates(str, templateNode)
       case None => None
     }
   }
 
-  def parseDates(str: String, subjectUri: String): Option[Any] = {
+  def parseDates(str: String, subjectUri: String): Option[(Option[String],Option[String])] = {
 
     val analyzer = RuntimeAnalyzer(subjectUri)    
 
@@ -129,10 +130,10 @@ class AdvancedTimexParser extends DataParser {
           None
         } else if (timexes.length == 1) {
           //println(" timex found for" + str + ":" + timexes.head);
-          Some((timexes.head \\ "@value").toString)
+          Some(( Some((timexes.head \\ "@value").toString), None))
         } else if (timexes.length == 2) {
           println(" timex found for" + str + ": start" + timexes.head + "; end " + timexes.tail);
-          Some((timexes.head \\ "@value").toString)
+          Some( ( Some((timexes.head \\ "@value").toString), Some((timexes.tail \\ "@value").toString) ))
         } else {
           println("too much timexes found for " + str)
           None
@@ -151,5 +152,48 @@ class AdvancedTimexParser extends DataParser {
   private def escapeStr(str: String) = {
     // result will be an XML -> escape predefined XML symbols
     str.replaceAll("&", "&amp;")
+  }
+}
+
+object CustomStringParser extends DataParser {
+
+  private val smallTagRegex = """<small[^>]*>\(?(.*?)\)?<\/small>""".r
+  private val tagRegex = """\<.*?\>""".r
+
+  override def parse(node : Node) : Option[String] = {
+
+    //Build text from node
+    val sb = new StringBuilder()
+    nodeToString(node, sb)
+
+    //Clean text
+    var text = sb.toString()
+    // Replace text in <small></small> tags with an "equivalent" string representation
+    // Simply extracting the content puts this data at the same level as other text appearing
+    // in the node, which might not be the editor's semantics
+    text = smallTagRegex.replaceAllIn(text, (m: Match) => if (m.group(1).nonEmpty) "($1)" else "")
+    text = tagRegex.replaceAllIn(text, "") //strip tags
+    text = WikiUtil.removeWikiEmphasis(text)
+    text = text.replace("&nbsp;", " ")//TODO decode all html entities here
+    text = text.trim
+
+    if(text.isEmpty)
+    {
+      None
+    }
+    else
+    {
+      Some(text)
+    }
+  }
+
+  private def nodeToString(node : Node, sb : StringBuilder)
+  {
+    node match
+    {
+      case TextNode(text, _) => sb.append(text)
+      case _ : TableNode => //ignore
+      case _ => node.children.foreach(child => nodeToString(child, sb))
+    }
   }
 }

@@ -11,6 +11,7 @@ import play.api.libs.json.Json
 import reactivemongo.bson.BSONObjectID
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Logger
+import org.dbpedia.extraction.wikiparser.WikiParserException
 
 
 case class NoRevisionDataException(message: String) extends Exception(message)
@@ -36,6 +37,7 @@ class TemporalInfoboxExtractorActor extends Actor {
       logSuccess(extractionRunId, number, totalNumber, pageTitleInUri, runtime)
       }catch{
         case ex: NoRevisionDataException => logNoData(extractionRunId, number, totalNumber, pageTitleInUri)
+        case ex: WikiParserException => logWikiParserErrors(extractionRunId, number, totalNumber, pageTitleInUri, ex)
       }
   }
 
@@ -43,6 +45,12 @@ class TemporalInfoboxExtractorActor extends Actor {
     implicit val _extractionRunId = Some(extractionRunId)
     EventLogger raise Event(noRevisionDataFound, s"($number/$totalNumber) No revisions found for page $pageTitleInUri (Actor: ${self.path.name})",
       Json.obj("uriTitle" -> pageTitleInUri))
+  }
+
+  private def logWikiParserErrors(extractionRunId: BSONObjectID, number: Int, totalNumber: Int, pageTitleInUri: String, ex: Throwable) {
+    implicit val _extractionRunId = Some(extractionRunId)
+    EventLogger raise Event(unableToParseWikiContent, s"($number/$totalNumber) Unable to parse Revision Content for page $pageTitleInUri (Actor: ${self.path.name})",
+      Json.obj("uriTitle" -> pageTitleInUri, "type" -> ex.getClass.getCanonicalName, "message" -> ex.getMessage))
   }
 
 

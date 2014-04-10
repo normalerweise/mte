@@ -27,7 +27,7 @@ class ThreadUnsafeDependencies {
 
 object ThreadUnsafeDependencies {
   def create(callerIdentifier: String) = synchronized {
-    Logger.info("Creating threadunsafe dependencies for " + callerIdentifier)
+    //Logger.info("Creating threadunsafe dependencies for " + callerIdentifier)
     new ThreadUnsafeDependencies
   }
 }
@@ -69,11 +69,11 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
   private def convertDBPediaExtractorQuadsToCustomQuad(rev: Revision, quad: org.dbpedia.extraction.destinations.Quad) = {
     quad match {
       case dbPediaQuad: TemporalQuad =>
-        val fromDate  = Option(dbPediaQuad.fromDate) match {
+        val fromDate  = dbPediaQuad.fromDate match {
           case Some(fromDate) => List("fromDate" -> fromDate)
           case None => List.empty
         }
-        val toDate  = Option(dbPediaQuad.toDate) match {
+        val toDate  = dbPediaQuad.toDate match {
           case Some(toDate) => List("toDate" -> toDate)
           case None => List.empty
         }

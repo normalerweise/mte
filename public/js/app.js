@@ -83,6 +83,16 @@ require(['angular', './controllers' ,'./directives', './filters', './services', 
           templateUrl: 'partials/partial1.html',
           controller: controllers.MyCtrl1
         })
+        .state('masterdata.dbpedia.querySettlementResources', {
+          url: "/query-settlement-resources",
+          templateUrl: 'partials/partial1_1.html',
+          controller: controllers.MyCtrl1
+        })
+        .state('masterdata.dbpedia.queryAmericanFootballPlayerResources', {
+          url: "/query-americanfootballplayer-resources",
+          templateUrl: 'partials/partial1_2.html',
+          controller: controllers.MyCtrl1
+        })
 
         $urlRouterProvider.otherwise("/extraction/semistructured/overview");
     });
