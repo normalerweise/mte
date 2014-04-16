@@ -155,7 +155,7 @@ controllers.MyCtrl2 = function($scope, $http, $loading, $filter, toaster, ngTabl
         $scope.generateAmericanFootballPlayerSample = function(){
           var extractionRunId = $scope.extractionRunId();
           $http.get('/api/v1/extractionruns/' + extractionRunId + '/resources-random-sample',
-            { params: {size: $scope.formData.size, queryId: 'resources-of-type-dbpedia-americanFootballplayer'} }).success(function(sample){
+            { params: {size: $scope.formData.size, queryId: 'resources-of-type-dbpedia-americanfootballplayer'} }).success(function(sample){
               $loading.start('sample');
               toaster.pop('success', "Generate Sample", "Triggered sample generation!", 3000);
             // simply reset -> new data will be received later

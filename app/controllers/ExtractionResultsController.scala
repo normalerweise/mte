@@ -84,7 +84,7 @@ object ExtractionResultsController extends Controller {
   }
 
   def getExtractionRunResultsOfPage(extractionRunId: String, pageTitle: String) = Action.async {
-    ExtractionRunPageResult.getAsJson(extractionRunId, pageTitle).map( results => Ok(Json.toJson(results)))
+    ExtractionRunPageResult.getAsJson(extractionRunId, pageTitle).map( results => Ok(Json.prettyPrint(Json.toJson(results))))
   }
 
   def getAll = Action.async {
