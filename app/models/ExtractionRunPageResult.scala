@@ -21,7 +21,7 @@ import scala.Some
  * Created by Norman on 03.04.14.
  */
 
-case class Quad(subject: String, predicate: String, obj: String, context: Map[String, String])
+case class Quad(subject: String, predicate: String, obj: String, datatype: Option[String], language: Option[String], context: Map[String, String])
 
 case class ExtractionRunPageResult(id: String, extractionRunId: BSONObjectID, extractionRunDescription: String, page: Page, quads: List[Quad])
 
@@ -39,8 +39,9 @@ object ExtractionRunPageResult extends MongoModel {
 
   import ExtractionRunPageResultJsonConverter._
 
-  def save(runPageResult: ExtractionRunPageResult) =
+  def save(runPageResult: ExtractionRunPageResult) = {
     collection.save(runPageResult)(executionContext, mongoWritesExtended)
+  }
 
   def getPageQuadsAsJson(pageTitleInUri: String) =
     collection.find(Json.obj("page.uriTitle" -> pageTitleInUri))
@@ -75,6 +76,12 @@ object ExtractionRunPageResult extends MongoModel {
       .cursor[JsValue].collect[Seq]()
 
 
+  def deleteAllResultsOf(extractionRunId: String) = {
+    val selector = Json.obj("extractionRunId" -> extractionRunId)
+    collection.remove(selector, GetLastError(), false)
+  }
+
+
 //  def listAsJson(extractionRunId: String)  = {
 //      val matchh = Match(BSONDocument("extractionRunId" -> extractionRunId ))
 //      val gropu = GroupField("page.uriTitle")(
@@ -96,6 +103,8 @@ object ExtractionRunPageResultJsonConverter {
     (JsPath \ "subject").read[String] and
       (JsPath \ "predicate").read[String] and
       (JsPath \ "object").read[String] and
+      (JsPath \ "datatype").readNullable[String] and
+      (JsPath \ "language").readNullable[String] and
       (JsPath \ "context").read[Map[String, String]]
     )(Quad.apply _)
 
@@ -103,6 +112,8 @@ object ExtractionRunPageResultJsonConverter {
       (JsPath \ "subject").write[String] and
       (JsPath \ "predicate").write[String] and
       (JsPath \ "object").write[String] and
+      (JsPath \ "datatype").writeNullable[String] and
+      (JsPath \ "language").writeNullable[String] and
       (JsPath \ "context").write[Map[String, String]]
     )(unlift(Quad.unapply _))
 

@@ -5,7 +5,7 @@ package extractors
 import org.dbpedia.extraction.wikiparser.WikiTitle
 import org.dbpedia.extraction.wikiparser.WikiParser
 import org.dbpedia.extraction.mappings.{PageContext, MappingExtractor}
-import ch.weisenburger.dbpedia.extraction.mappings.{RuntimeAnalyzer, TemporalQuad}
+import ch.weisenburger.dbpedia.extraction.mappings.{ExtendedQuad, RuntimeAnalyzer}
 import models.{Quad, Revision}
 import org.dbpedia.extraction.util.Language
 import org.dbpedia.extraction.sources.WikiPage
@@ -68,7 +68,7 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
 
   private def convertDBPediaExtractorQuadsToCustomQuad(rev: Revision, quad: org.dbpedia.extraction.destinations.Quad) = {
     quad match {
-      case dbPediaQuad: TemporalQuad =>
+      case dbPediaQuad: ExtendedQuad =>
         val fromDate  = dbPediaQuad.fromDate match {
           case Some(fromDate) => List("fromDate" -> fromDate)
           case None => List.empty
@@ -78,10 +78,10 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
           case None => List.empty
         }
 
-        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value,
+        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Option(dbPediaQuad.datatype), Option(dbPediaQuad.language),
           (List("sourceRevision" -> rev.id.toString) ++ fromDate ++ toDate).toMap)
       case dbPediaQuad: org.dbpedia.extraction.destinations.Quad =>
-        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Map("sourceRevision" -> rev.id.toString))
+        Quad(dbPediaQuad.subject, dbPediaQuad.predicate, dbPediaQuad.value, Option(dbPediaQuad.datatype), Option(dbPediaQuad.language), Map("sourceRevision" -> rev.id.toString))
     }
   }
 

@@ -34,6 +34,7 @@ object EventTypes extends Enumeration {
   val noRevisionDataFound = EventTypeValue("noRevisionDataFound", "No Revision Data found")
   val unableToParseWikiContent = EventTypeValue("unableToParseWikiContent", "Unable To Parse Wiki Content")
   val exception = EventTypeValue("exception", "Exception Occured")
+  val convertedResultsToRDF = EventTypeValue("convertedResultsToRDF", "Converted Extraction Result to RDF")
 
   def withNameOpt(str: String):Option[EventType] = {
     EventTypes.values.find( _.toString == str).asInstanceOf[Option[EventType]]

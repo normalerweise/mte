@@ -11,9 +11,15 @@ import scala.io.{Codec, Source}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Logger
 import java.nio.charset.MalformedInputException
-import models.{Event, Util, ExtractionRunPageResult, Quad}
+import models._
 import scala.math.BigDecimal.RoundingMode
-
+import models.Quad
+import playground.{TurtleSaver, QuadsMerger}
+import play.api.libs.concurrent.Akka
+import actors.events.EventLogger
+import models.EventTypes._
+import models.Quad
+import play.api.Play.current
 
 object ExtractionResultsController extends Controller {
 
@@ -26,12 +32,7 @@ object ExtractionResultsController extends Controller {
 
   case class PageStats(pageName: String, properties: Seq[(String,Int,List[String])])
 
-  implicit val quadReads: Reads[Quad] = (
-    (JsPath \ "subject").read[String] and
-    (JsPath \ "predicate").read[String] and
-    (JsPath \ "object").read[String] and
-    (JsPath \ "context").read[Map[String,String]]
-    )(Quad.apply _)
+  implicit val quadReads: Reads[Quad] = ExtractionRunPageResultJsonConverter.quadMongoReads
 
   implicit val pageStatsWrites = new Writes[PageStats] {
     def writes(pageStats: PageStats) = {
@@ -91,6 +92,23 @@ object ExtractionResultsController extends Controller {
     //future { Ok("test")}
    ExtractionRunPageResult.getAllAsJson.map( results => Ok(Json.toJson(results)))
   }
+
+  import scala.concurrent.duration._
+
+  def quadsToRDF(extractionRunId: String) = Action {
+    Akka.system.scheduler.scheduleOnce(100 microseconds) {
+    ExtractionRunPageResult.get(extractionRunId).map {
+      pageExtractionResults =>
+        val quadsToSave = pageExtractionResults.map { page => QuadsMerger.getDistinctQuads(page.quads)}
+        TurtleSaver.save(s"data/$extractionRunId.tt", quadsToSave.flatten)
+        EventLogger raise Event(convertedResultsToRDF, s"Converted Results to RDF for Run: ${extractionRunId}")
+    }
+    }
+    Ok
+  }
+
+  def getResultsAsRDF(extractionRunId: String) = Application.dataFile(extractionRunId + ".tt")
+
 
   private def quadToStats(extractionResult: ExtractionRunPageResult) = {
     val grouped = extractionResult.quads.groupBy(_.predicate)

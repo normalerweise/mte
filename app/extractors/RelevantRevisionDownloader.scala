@@ -30,7 +30,7 @@ object RelevantRevisionDownloader {
 
   ////////////////////////////// 
 
-  private def selectExtractionRelevantRevisions(revisions: List[Revision]): List[Revision] = {
+  def selectExtractionRelevantRevisions(revisions: List[Revision]): List[Revision] = {
     val revsByYear = revisions.groupBy(_.timestamp.year)
       .toList
       .sortBy {
@@ -74,7 +74,7 @@ object RelevantRevisionDownloader {
     case n: Int => n / 2 // skip ((js)/2 + 1) => revs are discrete
   }
 
-  private def getRevisionStream(pageName: String): Stream[Revision] = {
+  def getRevisionStream(pageName: String): Stream[Revision] = {
     def continue(previousResult: JsValue): Stream[Revision] = {
       shouldContinue(previousResult) match {
         case Some(continueId) =>
@@ -95,14 +95,15 @@ object RelevantRevisionDownloader {
     }
   }
 
-  private def fetchRevisionContents(revs: List[Revision], pageTitleInUri: String) = {
-    val queryResult = fetchUrl(buildFetchRevisionsWithContentQueryUrl(revs))
+  // 50 is the api limit -> use 40 to have some buffer
+  private def fetchRevisionContents(revs: List[Revision], pageTitleInUri: String) = revs.grouped(40).flatMap { revsBatch =>
+    val queryResult = fetchUrl(buildFetchRevisionsWithContentQueryUrl(revsBatch))
     // Continue query not implemented -> We assume that all revs for one page
     // fit into one query; Improve implementation once needed
     assert(shouldContinue(queryResult) == None)
     val page = getPage(queryResult, pageTitleInUri)
     getRevisionsWithContentAndPage(queryResult, page)
-  }
+  }.toSeq
 
   private def shouldContinue(previousResult: JsValue): Option[Long] = 
     (previousResult \ "continue" \ "rvcontinue").asOpt[Long]

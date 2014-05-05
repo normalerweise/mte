@@ -13,6 +13,7 @@ GET /api/v1/events                          controllers.Application.connectEvent
 # Extraction Run
 GET  /api/v1/extractionruns                         controllers.ExtractionRunController.listAsJson
 POST /api/v1/extractionruns                         controllers.ExtractionRunController.create
+DELETE /api/v1/extractionruns/:id                       controllers.ExtractionRunController.delete(id: String)
 
 GET  /api/v1/extractionruns/:extractionRunId/resources-random-sample  controllers.SampleController.generateRandomSampleForPredefinedQueryResults(size: Int, extractionRunId, queryId)
 POST /api/v1/extractionruns/resources-from-file                       controllers.SampleController.generateSampleFromFile
@@ -26,6 +27,8 @@ GET  /api/v1/extractionruns/:id/extraction-results  controllers.ExtractionResult
 GET  /api/v1/extractionruns/:id/list-results        controllers.ExtractionResultsController.listExtractionRunResults(id)
 GET  /api/v1/extractionruns/:id/stats               controllers.ExtractionResultsController.getExtractionRunStats(id)
 GET  /api/v1/extractionruns/:id/event-stats         controllers.ExtractionResultsController.getExtractionRunEventStats(id)
+GET  /api/v1/extractionruns/:id/quads-to-rdf        controllers.ExtractionResultsController.quadsToRDF(id)
+GET  /api/v1/extractionruns/:id/get-rdf             controllers.ExtractionResultsController.getResultsAsRDF(id)
 
 
 # SPARQL Queries

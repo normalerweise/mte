@@ -238,7 +238,7 @@ controllers.MyCtrl3 = function($scope, $http, $loading, toaster, ngTableParams, 
 }
 controllers.MyCtrl3.$inject = ['$scope', '$http', '$loading', 'toaster', 'ngTableParams', '$filter'];
 
-controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter) {
+controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
    var sample = [];
     $scope.tableParams = new ngTableParams({
             page: 1,            // show first page
@@ -279,10 +279,17 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter) {
      });
   };
 
+   $scope.convertToRDF = function() {
+     var id = $scope.extractionRunId();
+     $http.get('/api/v1/extractionruns/' + id + '/quads-to-rdf').success(function(res){
+       toaster.pop('success', "Process Results", "Triggered RDF conversion!", 3000);
+     });
+   }
+
   $scope.listExtractedData();
 
 }
-controllers.MyCtrl4.$inject = ['$scope', '$http','ngTableParams', '$filter'];
+controllers.MyCtrl4.$inject = ['$scope', '$http','ngTableParams', '$filter', 'toaster'];
 
 controllers.MyCtrl5 = function($scope, $http, ngTableParams, $filter, $loading) {
   var statsPerPage = [];
@@ -515,6 +522,27 @@ controllers.ExtractionRunCtrl = function($scope, $state, $http, $loading, $filte
     });
     toaster.pop('success', "Extraction Run", "Selected Extraction Run!", 3000);
   }
+
+   $scope.delete = function(run) {
+     $http.delete('/api/v1/extractionruns/' + run._id)
+       .success(function(extractionRun){
+         var idx = extractionRuns.indexOf(run);
+          if (idx != -1) {
+             extractionRuns.splice(idx, 1); // The second parameter is the number of elements to remove.
+             $scope.deleteSelection();
+             $scope.tableParams.reload();
+          toaster.pop('success', "Extraction Run", "Deleted Extraction Run!", 3000);
+         }
+        });
+    }
+
+    $scope.deleteSelection = function() {
+        //$scope.setExtractionRun(null);
+        angular.forEach(extractionRuns, function(element){
+            element.$selected = false;
+        });
+      }
+
 
   function parseData(run) {
     run.createdOnMomentCalendar = moment(run.createdOn).calendar();

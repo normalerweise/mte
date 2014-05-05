@@ -4,6 +4,7 @@
 <p>
   <button class="btn btn-primary" ng-click="extractSample()">Extract Sample</button>
   <button class="btn btn-default" ng-click="listExtractedData()">Refresh Extracted Data</button>
+  <button class="btn btn-default" ng-click="convertToRDF()">Convert to Extraction Results to RDF</button>
 </p>
 <br/><br/>
 
@@ -17,5 +18,7 @@
         <td data-title="'Results'"><a ng-show="pageResult.numberOfQuads > 0" target="_blank" href="/api/v1/pages/{{pageResult.page.uriTitle}}/results?extractionRunId={{pageResult.extractionRunId}}">display</a></td>
     </tr>
 </table>
+<br/>
+<a target="_blank" href="/api/v1/extractionruns/{{extractionRunId()}}/get-rdf">display results rdf</a>
 
 

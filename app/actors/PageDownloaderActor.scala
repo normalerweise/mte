@@ -11,6 +11,7 @@ import play.api.Logger
 import extractors.WikiPageDoesNotExistException
 import play.api.libs.json.Json
 import reactivemongo.bson.BSONObjectID
+import scala.concurrent.Await
 
 case class DownloadAndSavePage(extractionRunId: Option[BSONObjectID], number: Int, totalNumber: Int, pageTitleInUri: String)
 
@@ -31,19 +32,32 @@ class PageDownloaderActor extends Actor {
 
   private def downloadAndSavePage(pageTitleInUri: String)(implicit extractionRunId: Option[BSONObjectID]) = {
     val (revisions, runtime) = Util.measure(RelevantRevisionDownloader.download(pageTitleInUri))
-    Revision.saveBulk(revisions).map(_.onComplete {
-      case Success(lastError) => lastError.inError match {
-        case true => {
-          val message = s"$pageTitleInUri: Save failed: [lastError=$lastError]"
-          Logger.error(message)
-          EventLogger raise Event(exception, message)
-        }
-        case false => Unit
-      }
-      case Failure(ex) => val message = s"$pageTitleInUri: Save failed: [message=${ex.getMessage}]"
+    Logger.info(revisions.sortBy(_.timestamp.toDate).reverse.take(5).map(_.timestamp).mkString("\n"))
+//    Await.result(Revision.saveBulk(revisions).map(_.onComplete {
+//      case Success(lastError) => lastError.ok match {
+//        case false => {
+//          val message = s"$pageTitleInUri: Save failed: [lastError=$lastError]"
+//          Logger.error(message)
+//          EventLogger raise Event(exception, message)
+//        }
+//        case true => Logger.info("completed " + lastError)
+//      }
+//      case Failure(ex) => val message = s"$pageTitleInUri: Save failed: [message=${ex.getMessage}]"
+//        Logger.error(message)
+//        EventLogger raise Event(exception, message)
+//    }), 5000 milliseconds)
+
+
+    import scala.concurrent.duration._
+    val result = Await.result(Revision.saveBulk(revisions), 5000 milliseconds)
+     result.map { lastError => lastError.ok match {
+      case false => {
+        val message = s"$pageTitleInUri: Save failed: [lastError=$lastError]"
         Logger.error(message)
         EventLogger raise Event(exception, message)
-    })
+      }
+      case true => Logger.info("completed " + lastError)
+     }}
     Some(runtime)
   }
 

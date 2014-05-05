@@ -10,11 +10,11 @@
 <br/>
 <table ng-table="tableParams" show-filter="true" class="table ng-table-rowselected">
     <tr ng-repeat="run in $data"
-        ng-click="changeSelection(run)"
         ng-class="{'active': run.$selected}">
-        <td data-title="'Description'" sortable="'description'" filter="{ 'description': 'text' }">{{run.description}}</td>
+        <td data-title="'Description'" sortable="'description'" filter="{ 'description': 'text' }" ng-click="changeSelection(run)">{{run.description}}</td>
         <td data-title="'Created on'" sortable="'createdOn'">{{ run.createdOnMomentCalendar }}</td>
         <td data-title="'Id'">{{run._id}}</td>
+        <td data-title="'Action'"><button ng-click="delete(run)"class="btn btn-danger btn-sm">delete</button></td>
     </tr>
 </table>
 

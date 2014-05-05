@@ -13,7 +13,7 @@ object SparqlController extends Controller {
 
   val resourcesOfTypeDBpediaCompany = PredefinedQuery("resources-of-type-dbpedia-company", (limit: Int, offset: Int) =>
       s"""
-        PREFIX res: <http://dbpedia.org/ontology/>
+      PREFIX res: <http://dbpedia.org/ontology/>
 
         SELECT distinct ?x
         WHERE
@@ -22,7 +22,7 @@ object SparqlController extends Controller {
               SELECT DISTINCT ?x
               WHERE
                 {
-                  ?x a res:Company
+                  ?x a res:AmericanFootballPlayer
                 } ORDER BY ASC(?x)
             }
             FILTER NOT EXISTS

@@ -5,6 +5,7 @@ import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.modules.reactivemongo.json.collection.JSONCollection
+import reactivemongo.core.commands.GetLastError
 
 
 object ExtractionRunTypes extends Enumeration {
@@ -71,6 +72,10 @@ object ExtractionRun extends MongoModel {
   def listAsJson = collection.find(Json.obj())
     .sort(Json.obj("createdOn" -> -1)).cursor[JsValue].collect[List]()
 
+  def delete(extractionRunId: String) = {
+    val selector = Json.obj("_id" -> extractionRunId)
+    collection.remove(selector, GetLastError(), false)
+  }
 }
 
 

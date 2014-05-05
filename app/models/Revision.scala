@@ -19,6 +19,9 @@ import reactivemongo.core.commands.SumValue
 import reactivemongo.core.commands.GroupField
 import play.api.libs.json.JsObject
 import reactivemongo.core.commands.AddToSet
+import scala.util.{Success, Failure}
+import play.api.Logger
+import scala.concurrent.Future
 
 /**
  * Created by Norman on 01.04.14.
@@ -91,7 +94,8 @@ object Revision extends MongoModel {
   }
 
   def saveBulk(revisions: Seq[Revision]) = {
-    revisions.map( r => collection.save(r)(executionContext,mongoWrites))
+    Logger.info(s"saving ${revisions.length}")
+    Future.sequence(revisions.map{ r => collection.save(r)(executionContext,mongoWrites) })
   }
 
   def getPageRevsAsJson(pageTitleInUri: String) =
