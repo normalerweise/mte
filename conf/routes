@@ -21,6 +21,10 @@ POST /api/v1/extractionruns/resources-from-file                       controller
 GET  /api/v1/extractionruns/extraction-results      controllers.ExtractionResultsController.getAll
 GET  /api/v1/extractionruns/:id                     controllers.ExtractionRunController.getById(id)
 GET  /api/v1/extractionruns/:id/download            controllers.PageController.downloadResourcesOfExtractionRun(id)
+GET  /api/v1/extractionruns/:id/convert             controllers.PageController.convertResourcesOfExtractionRunFromWikiMarkupToText(id)
+GET  /api/v1/extractionruns/:id/find-samples         controllers.PageController.extractSamplesFromWikiText(id)
+GET  /api/v1/extractionruns/:id/get-samples         controllers.PageController.getSamples(id)
+
 GET  /api/v1/extractionruns/:id/page-data           controllers.PageController.listDownloadedDataOfExtractionRun(id)
 GET  /api/v1/extractionruns/:id/infobox-extraction  controllers.InfoboxExtractionController.extractExtractionRunResources(id)
 GET  /api/v1/extractionruns/:id/extraction-results  controllers.ExtractionResultsController.getExtractionRunResults(id)
@@ -43,6 +47,7 @@ GET /api/v1/sparql/query/predefined/:id/cached-result controllers.SparqlControll
 
 GET /api/v1/pages/revs                              controllers.PageController.listDownloadedData()
 GET /api/v1/pages/:pageTitle/revs                   controllers.PageController.getPageRevsAsJson(pageTitle)
+GET /api/v1/pages/:pageTitle/text-revs              controllers.PageController.getTextPageRevsAsJson(pageTitle)
 GET /api/v1/pages/:pageTitle/results                controllers.ExtractionResultsController.getExtractionRunResultsOfPage(extractionRunId, pageTitle)
 
 GET /api/v1/pages/download                          controllers.PageController.updateDownloadedData

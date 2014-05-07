@@ -4,10 +4,10 @@
 
 require(['angular', './controllers' ,'./directives', './filters', './services', 'angular-animate', 'angular-ui-router', 'ui-bootstrap-tpls' ],
   function(angular, controllers) {
-    require(['./lib/angular-toaster', './lib/angular-loading', './lib/ng-table', './lib/ng-upload'], function() {
+    require(['./lib/angular-toaster', './lib/angular-loading', './lib/ng-table', './lib/ng-upload', './lib/bindonce'], function() {
     // Declare app level module which depends on filters, and services
     
-    angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 'ui.router', 'ui.bootstrap', 'toaster', 'darthwade.dwLoading', 'ngTable', 'ngUpload'])
+    angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 'ui.router', 'ui.bootstrap', 'toaster', 'darthwade.dwLoading', 'ngTable', 'ngUpload', 'pasvaz.bindonce' ])
       .config(function($stateProvider, $urlRouterProvider) { $stateProvider
         .state('withNavbar', {
           abstract: true,

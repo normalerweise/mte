@@ -50,10 +50,10 @@ case class Revision(id: Long, timestamp: DateTime, downloadedOn: DateTime, langu
 
 }
 
+// Revisions with WIKI Markup as content -> Used for Infobox extraction
+abstract trait TRevision extends MongoModel {
 
-object Revision extends MongoModel {
-
-  private def collection: JSONCollection = db.collection[JSONCollection]("revisions")
+  protected def collection: JSONCollection
 
   collection.indexesManager.ensure(Index(Seq(("page.uriTitle", Ascending)), Some("pageUriTitle"),false,true,false,false))
 
@@ -88,13 +88,12 @@ object Revision extends MongoModel {
     dateFromUTCTimestamp((n \ "timestamp").as[String])
   }
 
-   def dateFromUTCTimestamp(wikiTimestamp: String) = {
+  def dateFromUTCTimestamp(wikiTimestamp: String) = {
     val wikiRevTimestampFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
     wikiRevTimestampFormatter.parseDateTime(wikiTimestamp)
   }
 
   def saveBulk(revisions: Seq[Revision]) = {
-    Logger.info(s"saving ${revisions.length}")
     Future.sequence(revisions.map{ r => collection.save(r)(executionContext,mongoWrites) })
   }
 
@@ -113,14 +112,19 @@ object Revision extends MongoModel {
     _getAllPages.map(res => res.map( bdoc => BSONFormats.toJSON(bdoc) ))
   }
 
+  def deleteAllRevisionsOf(articleNameInURL: String) = {
+    val selector = Json.obj("page.uriTitle" -> articleNameInURL)
+    collection.remove(selector, GetLastError(), false)
+  }
+
   private def _getAllPages = {
     val gropu = GroupField("page.uriTitle")(
- //     ("revisions", AddToSet("$_id")),
+      //     ("revisions", AddToSet("$_id")),
       ("numberOfRevisions", SumValue(1))
     )
     val command = Aggregate("revisions", Seq( gropu ))
 
-     db.command(command)
+    db.command(command)
   }
 
   case class FaliedToExtractPageNameException() extends Exception
@@ -130,11 +134,17 @@ object Revision extends MongoModel {
         case Some(pageTitleInUri) => pageTitleInUri
         case None => throw new FaliedToExtractPageNameException
       }
-  })
+    })
 
   def stats = collection.stats()
 
   def drop = collection.drop()
+
+}
+
+object Revision extends TRevision {
+
+  protected def collection: JSONCollection = db.collection[JSONCollection]("revisions")
 
 }
 

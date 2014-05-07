@@ -24,8 +24,18 @@ object DefaultActors {
   lazy val dbPedia = Await.result( supervisor ? Props[DBpediaSparqlEndpointActor] map{ case a: ActorRef => a}, 1 second)
 
   lazy val pageDownloader = Await.result(
-    supervisor ? Props[PageDownloaderActor].withRouter(RoundRobinRouter(nrOfInstances = 3))
+    supervisor ? Props[ArticleDownloaderActor].withRouter(RoundRobinRouter(nrOfInstances = 3))
       map{ case a: ActorRef => a}, 1 second)
+
+  lazy val wikiMarkupToTextConverter = Await.result(
+    supervisor ? Props[WikiMarkupToTextConverterActor].withRouter(RoundRobinRouter(nrOfInstances = 6))
+      map{ case a: ActorRef => a}, 1 second)
+
+
+  lazy val sampleFinder = Await.result(
+    supervisor ? Props[SampleFinderActor].withRouter(RoundRobinRouter(nrOfInstances = 6))
+      map{ case a: ActorRef => a}, 1 second)
+
 
 
   private val resizer = DefaultResizer(lowerBound = 1, upperBound = 6, messagesPerResize = 5)

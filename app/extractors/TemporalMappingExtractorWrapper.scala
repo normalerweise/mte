@@ -63,6 +63,7 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
     analyzer.stopWikiParser
 
     threadUnsafeDependencies.
+
       englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
   }
 

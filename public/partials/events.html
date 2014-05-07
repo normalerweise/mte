@@ -2,14 +2,14 @@
     <h4>Recent Events: </h4>
 
     <ul class="media-list">
-        <li class="media" ng-repeat="event in events">
+        <li class="media" bindonce ng-repeat="event in events">
             <a class="pull-left" href="#">
                 <span ng-if="event.type === 'exception'" class="glyphicon glyphicon-exclamation-sign"></span>
                 <span ng-if="!(event.type === 'exception')" class="glyphicon glyphicon-ok"></span>
             </a>
             <div class="media-body">
                 <h5 class="media-heading" style="margin-bottom:0px">{{ event.description }}</h5>
-                <span style="font-size:1.0em;">({{ event.timestamp.fromNow() }})</span>
+                <span style="font-size:1.0em;">({{ event.timestamp }})</span>
             </div>
         </li>
     </ul>

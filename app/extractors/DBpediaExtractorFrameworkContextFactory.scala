@@ -7,6 +7,7 @@ import org.dbpedia.extraction.wikiparser.{WikiParser, Namespace, PageNode}
 import org.dbpedia.extraction.sources.XMLSource
 import java.io.File
 import org.dbpedia.extraction.ontology.io.OntologyReader
+import extractors.parser.AdvancedTimexParser
 
 /**
  * Created by Norman on 02.04.14.

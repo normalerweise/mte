@@ -1,6 +1,6 @@
-import sbtdocker.{Dockerfile, Plugin}
-import Plugin._
-import Plugin.DockerKeys._
+//import sbtdocker.{Dockerfile, Plugin}
+//import Plugin._
+//import Plugin.DockerKeys._
 import sbt._
 import Keys._
 
@@ -21,9 +21,20 @@ libraryDependencies ++= Seq(
   "org.dbpedia.extraction" % "core" % "4.0-SNAPSHOT",
   "de.unihd.dbs" % "heideltime-standalone" % "1.5",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.3.1",
-  "org.apache.jena" % "jena-arq" % "2.11.1" excludeAll(ExclusionRule(organization = "org.slf4j", name="slf4j-log4j12")),
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2",
-  "com.kenshoo" %% "metrics-play" % "0.1.3"
+  "org.apache.jena" % "jena-arq" % "2.11.1"
+    exclude("log4j", "log4j")
+    exclude("org.slf4j", "slf4j-log4j12"),
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
+    exclude("org.apache.logging.log4j", "log4j-to-slf4j"),
+   // exclude("org.apache.logging.log4j", "log4j-core")
+   // exclude("org.apache.logging.log4j","log4j-api"),
+  "com.kenshoo" %% "metrics-play" % "0.1.3",
+  "de.uni-mannheim.dws" % "WikiParser" % "0.0.1-SNAPSHOT"
+    exclude("commons-logging","commons-logging"),
+  "ch.weisenburger" %% "mtner" % "1.0-SNAPSHOT",
+  "org.slf4j" % "log4j-over-slf4j" % "1.7.5",
+  "org.slf4j" % "jcl-over-slf4j" % "1.7.5",
+  "nl.grons" %% "metrics-scala" % "3.2.0_a2.2"
 )     
 
 play.Project.playScalaSettings

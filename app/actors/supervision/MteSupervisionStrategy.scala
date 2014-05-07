@@ -6,9 +6,9 @@ import akka.actor.SupervisorStrategy._
 import actors.events.EventLogger
 import akka.actor.OneForOneStrategy
 import play.api.Logger
-import extractors.QueryResultParserException
 import models.RevisionException
 import java.io.IOException
+import extractors.download.WikipediaClient.ResultParsingException
 
 
 /**
@@ -26,13 +26,16 @@ class MteSupervisionStrategy extends SupervisorStrategyConfigurator {
       case ex: IllegalArgumentException =>
         EventLogger.raiseExceptionEvent(ex)
         Stop
-      case ex: QueryResultParserException =>
+      case ex: ResultParsingException =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: RevisionException =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: IOException =>
+        EventLogger.raiseExceptionEvent(ex)
+        Restart
+      case ex: org.sweble.wikitext.engine.CompilerException =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: reactivemongo.core.errors.GenericDriverException =>

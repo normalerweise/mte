@@ -1,28 +1,4 @@
-
-FROM ubuntu:12.04
-
-# make sure the package repository is up to date
-#RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
-RUN apt-get update
-
-# Avoid disturbing warnings in apt-get install
-RUN apt-get install -y dialog
-
-# We need to unzip later
-RUN apt-get install -y unzip
-
-# Fake a fuse install
-RUN apt-get install -y --force-yes libfuse2
-RUN cd /tmp ; apt-get download fuse
-RUN cd /tmp ; dpkg-deb -x fuse_* .
-RUN cd /tmp ; dpkg-deb -e fuse_*
-RUN cd /tmp ; rm fuse_*.deb
-RUN cd /tmp ; echo -en '#!/bin/bash\nexit 0\n' > DEBIAN/postinst
-RUN cd /tmp ; dpkg-deb -b . /fuse.deb
-RUN cd /tmp ; dpkg -i /fuse.deb
-
-# Actually install java	
-RUN apt-get install -y openjdk-7-jre
+FROM zeeburg.informatik.uni-mannheim.de:5000/ubuntu_java:latest
 
 
 # Install APP

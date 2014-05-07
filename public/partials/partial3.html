@@ -8,6 +8,7 @@
 
         <p>
             <button class="btn btn-primary" ng-click="downloadSample()">Download Sample</button>
+            <button class="btn btn-primary" ng-click="convertToTextSample()">Convert Sample WikiMarkup to Text</button>
            <!-- <button class="btn btn-primary" ng-click="updateData()">Update Data</button> -->
            <button class="btn btn-default" ng-click="listDownloadedData()">Refresh List</button>
         </p>
@@ -20,7 +21,8 @@
                 <tr ng-repeat="page in $data">
                     <td data-title="'Page Title'" sortable="'pageTitle'" filter="{ 'pageTitle': 'text' }">{{page.pageTitle}}</td>
                     <td data-title="'Has data'" sortable="'hasDownloadedData'" filter="{ 'hasDownloadedData': 'text' }">{{page.hasDownloadedData}}</td>
-                    <td data-title="'Data'"><a ng-show="page.hasDownloadedData" target="_blank" href="/api/v1/pages/{{page.pageTitle}}/revs">display</a></td>
+                    <td data-title="'Wiki Data'"><a ng-show="page.hasDownloadedData" target="_blank" href="/api/v1/pages/{{page.pageTitle}}/revs">display markup</a></td>
+                    <td data-title="'Text Data'"><a ng-show="page.hasDownloadedData" target="_blank" href="/api/v1/pages/{{page.pageTitle}}/text-revs">display text</a></td>
                 </tr>
             </table>
 

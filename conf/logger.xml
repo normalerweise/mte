@@ -1,4 +1,8 @@
-<configuration>
+<configuration debug="true">
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
     
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
   
@@ -14,13 +18,19 @@
       <pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
     </encoder>
   </appender>
-  
+
+   <root level="INFO">
+     <appender-ref ref="STDOUT" />
+     <appender-ref ref="FILE" />
+   </root>
+
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
+  <logger name="org.dbpedia.extraction.dataparser.UnitValueParser" level="ERROR" />
+  <logger name="org.dbpedia.extraction.mappings.SimplePropertyMapping" level="FINE" />
+  <logger name="extractors.parser.AdvancedTimexParser" level="ERROR" />
 
-  <root level="ERROR">
-    <appender-ref ref="STDOUT" />
-    <appender-ref ref="FILE" />
-  </root>
+  <logger name="ner.LingPipeTrainingGenerator" level="INFO" />
+
   
 </configuration>

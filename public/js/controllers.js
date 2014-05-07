@@ -212,6 +212,15 @@ controllers.MyCtrl3 = function($scope, $http, $loading, toaster, ngTableParams, 
     });
   };
 
+  $scope.convertToTextSample = function(){
+      var id = $scope.extractionRunId()
+      $http.get('/api/v1/extractionruns/' + id + '/convert').success(function(returnStatement){
+        $scope.alert = "Started to convert revisions: Press 'List' to update the view ";
+      });
+    };
+
+
+
     $scope.updateData = function(){
       $http.get('/api/v1/pages/download').success(function(returnStatement){
         $scope.alert = "Started to update all pages";
@@ -284,6 +293,13 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
      $http.get('/api/v1/extractionruns/' + id + '/quads-to-rdf').success(function(res){
        toaster.pop('success', "Process Results", "Triggered RDF conversion!", 3000);
      });
+   }
+
+   $scope.extractSampleOccurences = function() {
+   var id = $scope.extractionRunId();
+        $http.get('/api/v1/extractionruns/' + id + '/find-samples').success(function(res){
+          toaster.pop('success', "Process Results", "Triggered Sample Occurence extraction!", 3000);
+        });
    }
 
   $scope.listExtractedData();
@@ -360,19 +376,29 @@ controllers.Events = function($rootScope, $scope, $http, toaster) {
  function defaultHandler(event) {
    event = parseData(event)
    $scope.events.unshift(event);
-   if($scope.events.length > 100) {
-    $scope.events.splice(-1,1);
+   var length = $scope.events.length
+   if( length > 150) {
+    $scope.events.splice(50,(length - 50));
    }
 
    popToastIfException(event)
+   broadcastIfWhitelisted(event)
 
-   $rootScope.$broadcast('serverEvent:' + event.type, event);
    $scope.$apply();
+ }
+
+ function broadcastIfWhitelisted(event) {
+   if(event.type === "exception" ||
+      event.type === "generatedSample" ||
+      event.type === "updatedExtractionRun" ||
+      event.type === "executedSparqlQuery" ) {
+     $rootScope.$broadcast('serverEvent:' + event.type, event);
+   }
  }
 
  function parseData(event) {
    var eventData = JSON.parse(event.data);
-   eventData.timestamp = moment(eventData.timestamp);
+   eventData.timestamp = moment(eventData.timestamp).format();
    return eventData;
  }
 
