@@ -1,4 +1,5 @@
-import extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.formatters.QuadsMerger
 import org.joda.time.DateTime
 import models.{Page, Revision}
 import play.api.test.FakeApplication
@@ -6,7 +7,6 @@ import play.api.test._
 import play.api.test.Helpers._
 
 import org.specs2.mutable._
-import playground.{QuadsMerger, TurtleSaver}
 
 class TripleMergerTest extends Specification {
 

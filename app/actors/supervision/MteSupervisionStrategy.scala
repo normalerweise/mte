@@ -8,7 +8,7 @@ import akka.actor.OneForOneStrategy
 import play.api.Logger
 import models.RevisionException
 import java.io.IOException
-import extractors.download.WikipediaClient.ResultParsingException
+import extraction.download.WikipediaClient.ResultParsingException
 
 
 /**

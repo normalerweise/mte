@@ -1,4 +1,4 @@
-package extractors.download
+package extraction.download
 
 import models.Revision
 

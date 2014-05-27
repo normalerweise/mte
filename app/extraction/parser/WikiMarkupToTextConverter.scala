@@ -1,4 +1,4 @@
-package extractors
+package extraction.parser
 
 import org.sweble.wikitext.engine.{PageId, PageTitle, Compiler}
 import org.sweble.wikitext.engine.utils.SimpleWikiConfiguration

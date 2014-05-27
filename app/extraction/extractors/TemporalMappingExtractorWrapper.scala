@@ -1,4 +1,4 @@
-package extractors
+package extraction.extractors
 
 //
 
@@ -9,7 +9,6 @@ import ch.weisenburger.dbpedia.extraction.mappings.{ExtendedQuad, RuntimeAnalyze
 import models.{Quad, Revision}
 import org.dbpedia.extraction.util.Language
 import org.dbpedia.extraction.sources.WikiPage
-import play.api.Logger
 
 
 case class NoContentException(message: String) extends Exception(message)

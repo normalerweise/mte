@@ -9,8 +9,8 @@ import monitoring.Instrumented
 import play.api.libs.json.Json
 import models.{Revision, Event}
 import models.EventTypes._
-import extractors.download.{WikipediaClient, WikipediaRevisionSelector}
-import extractors.download.WikipediaClient.WikiPageDoesNotExistException
+import extraction.download.{WikipediaClient, WikipediaRevisionSelector}
+import extraction.download.WikipediaClient.WikiPageDoesNotExistException
 
 
 // Commands for the article downloader actor

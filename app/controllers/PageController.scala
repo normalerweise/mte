@@ -20,7 +20,7 @@ import actors.ConvertRevsFromWikiMarkupToText
 import scala.Some
 import actors.DownloadAndSaveArticle
 import actors.ExtractSamplesFromRevisionTexts
-import extractors.download.{WikipediaRevisionSelector, WikipediaClient}
+import extraction.download.{WikipediaRevisionSelector, WikipediaClient}
 
 /**
   * Created by Norman on 20.03.14.

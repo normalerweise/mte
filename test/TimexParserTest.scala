@@ -1,5 +1,6 @@
 import actors.Util
-import extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.formatters.TurtleSaver
 import org.joda.time.DateTime
 import models.{Page, Revision}
 import play.api.test.FakeApplication
@@ -7,7 +8,6 @@ import play.api.test._
 import play.api.test.Helpers._
 
 import org.specs2.mutable._
-import playground.TurtleSaver
 import scala.concurrent.Await
 import scala.concurrent.duration._
 

@@ -28,7 +28,7 @@
   <logger name="application" level="INFO" />
   <logger name="org.dbpedia.extraction.dataparser.UnitValueParser" level="ERROR" />
   <logger name="org.dbpedia.extraction.mappings.SimplePropertyMapping" level="FINE" />
-  <logger name="extractors.parser.AdvancedTimexParser" level="ERROR" />
+  <logger name="extraction.parser.AdvancedTimexParser" level="ERROR" />
 
   <logger name="ner.LingPipeTrainingGenerator" level="INFO" />
 

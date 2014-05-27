@@ -2,7 +2,6 @@ package actors
 
 import scala.concurrent.duration._
 import akka.actor.Actor
-import extractors.{ThreadUnsafeDependencies, TemporalDBPediaMappingExtractorWrapper}
 import models.{Event, ExtractionRunPageResult, Revision}
 import scala.concurrent.Await
 import actors.events.EventLogger
@@ -10,8 +9,8 @@ import models.EventTypes._
 import play.api.libs.json.Json
 import reactivemongo.bson.BSONObjectID
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.Logger
 import org.dbpedia.extraction.wikiparser.WikiParserException
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
 
 
 case class NoRevisionDataException(message: String) extends Exception(message)

@@ -1,4 +1,4 @@
-package extractors.parser
+package extraction.parser
 
 import de.unihd.dbs.heideltime.standalone.HeidelTimeStandalone
 import de.unihd.dbs.uima.annotator.heideltime.resources.Language
@@ -170,7 +170,17 @@ class AdvancedTimexParser extends DataParser {
       timexes.length match {
         case 0 => (None, None)
         case 1 => (getTimexValue(timexes.head), None)
-        case 2 => (getTimexValue(timexes.head), getTimexValue(timexes.last))
+        case 2 =>
+          // interval found -> store in temporal order
+          val first = getTimexValue(timexes.head)
+          val second = getTimexValue(timexes.last)
+          (first,second) match {
+            case (Some(first), Some(second)) if first <= second => (Some(first), Some(second))
+            case (Some(first), Some(second)) if first > second => (Some(second), Some(first))
+            case (None, Some(second)) => (Some(second), None)
+            case (Some(first), None) => (Some(first), None)
+            case (None, None) => (None, None)
+          }
         case i if i > 2 =>
           throw new UnexpectedNumberOfTimexesException(i, timexes.map(n => (n \\ "@value").toString))
       }
@@ -187,15 +197,13 @@ class AdvancedTimexParser extends DataParser {
    */
   def getTimexValue(timexNode: xml.Node): Option[String] = {
     var str = (timexNode \\ "@value").toString
-    if(str.length >= 4) {
-      str = str.substring(0,4)
-    } else {
+    if(str.length <= 4) {
       logger.error("Timex with less than the year: " + str + " in : " + timexNode.toString)
     }
 
-    if(str.contains("X")) {
+    if(str.substring(0,4).contains("X")) {
       logger.error("Year component unknown: " + str + " in : " + timexNode.toString )
-      None
+      return None
     } else {
       return Some(str)
     }

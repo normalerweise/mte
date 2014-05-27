@@ -1,4 +1,4 @@
-import extractors.download.{WikipediaRevisionSelector, WikipediaClient}
+import extraction.download.{WikipediaRevisionSelector, WikipediaClient}
 import org.specs2.mutable.Specification
 import play.api.test.WithApplication
 

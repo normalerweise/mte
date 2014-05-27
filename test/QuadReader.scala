@@ -1,11 +1,10 @@
-import actors.events.EventLogger
-import models.EventTypes._
-import models.{Event, ExtractionRunPageResult}
+
+import extraction.formatters.{TurtleSaver, QuadsMerger}
+import models.ExtractionRunPageResult
 import org.specs2.mutable.Specification
 import play.api.test.WithApplication
-import playground.{TurtleSaver, QuadsMerger}
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
+
 
 
 /**

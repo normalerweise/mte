@@ -6,12 +6,12 @@ import actors.events.EventLogger
 import models._
 import models.EventTypes._
 import play.api.libs.json.Json
-import extractors.{WikiMarkupToTextConverter}
 import scala.concurrent.Await
 import play.api.Logger
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import extraction.parser.WikiMarkupToTextConverter
 
 case class ConvertRevsFromWikiMarkupToText(extractionRunId: Option[BSONObjectID], number: Int, totalNumber: Int, pageTitleInUri: String)
 

@@ -1,6 +1,7 @@
-package playground
+package extraction.formatters
 
 import models.Quad
+import extraction.OntologyUtil
 
 object QuadsMerger {
 
@@ -24,10 +25,10 @@ object QuadsMerger {
       val sorted = quads.groupBy(_.obj).toSeq.sortBy(_._2.length * -1)
 
       val mostFrequent = sorted.headOption.get // one value must exist
-      val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))
+    val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))
 
-      if(mostFrequent._2.length <= secondMostFrequent._2.length) {
-       println("Competing quad values:" + mostFrequent + ";" + secondMostFrequent)
+      if (mostFrequent._2.length <= secondMostFrequent._2.length) {
+        println("Competing quad values: \n" + mostFrequent._2.head + ";\n" + secondMostFrequent._2.head)
       }
       mostFrequent._2.head
   }
@@ -36,11 +37,20 @@ object QuadsMerger {
   def getDistinctQuads(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
     val groupedQuads = quadsOfWikiPage.groupBy(_.predicate)
     val result = groupedQuads.map { quads =>
-      val temporallyGroupedQuads = groupByTemporalInformation(quads._2)
-      val selectedQuads = temporallyGroupedQuads.map( q => selectQuadsByValue(q._2))
-      selectedQuads.toSeq
+      if (OntologyUtil.isOntologyPredicate(quads._1)) {
+        selectOneQuadPerValue(quads._2)
+      } else {
+        val temporallyGroupedQuads = groupByTemporalInformation(quads._2)
+        val selectedQuads = temporallyGroupedQuads.map(q => selectQuadsByValue(q._2))
+        selectedQuads.toSeq
+      }
+
     }
     result.flatten.toSeq
-    }
+  }
+
+  def selectOneQuadPerValue(quads: Seq[Quad])= {
+    quads.groupBy(_.obj).map { case (_,quadsOfValue) => quadsOfValue.head }.toSeq
+  }
 
 }

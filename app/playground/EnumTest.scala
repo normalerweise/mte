@@ -8,7 +8,8 @@ import models.EventTypes.EventType
  */
 object EnumTest extends App {
 
-  val eventtype = EventTypes.withNameOpt("exception")
-  println(eventtype.get.description)
+  //val eventtype = EventTypes.withNameOpt("exception")
+
+  println(Option(""))
 
 }

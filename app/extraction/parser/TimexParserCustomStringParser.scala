@@ -1,4 +1,4 @@
-package extractors.parser
+package extraction.parser
 
 import org.dbpedia.extraction.dataparser.DataParser
 import org.dbpedia.extraction.wikiparser.{TableNode, TextNode, Node}
