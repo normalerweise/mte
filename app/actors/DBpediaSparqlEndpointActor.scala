@@ -8,6 +8,7 @@ import models.EventTypes._
 import actors.events.EventLogger
 import controllers.FileUtil
 import play.api.libs.json.Json
+import java.net.URLDecoder
 
 abstract class Query {
   val id: String

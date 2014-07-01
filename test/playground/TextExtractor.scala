@@ -22,6 +22,7 @@ object TextExtractor extends App {
   val pageId = new PageId(pageTitle, "234234".toInt)
   val wikitext = content
 
+
   val cp = compiler.postprocess(pageId, wikitext, null);
   val p = new TextConverter(wikiConfig, 80);
   p.go(cp.getPage()) match {

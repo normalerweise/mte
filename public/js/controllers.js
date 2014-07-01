@@ -295,6 +295,13 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
      });
    }
 
+      $scope.convertToDistinctRDF = function() {
+        var id = $scope.extractionRunId();
+        $http.get('/api/v1/extractionruns/' + id + '/distinct-quads-to-rdf').success(function(res){
+          toaster.pop('success', "Process Results", "Triggered distinct RDF conversion!", 3000);
+        });
+      }
+
    $scope.extractSampleOccurences = function() {
    var id = $scope.extractionRunId();
         $http.get('/api/v1/extractionruns/' + id + '/find-samples').success(function(res){

@@ -22,6 +22,7 @@ import reactivemongo.core.commands.AddToSet
 import scala.util.{Success, Failure}
 import play.api.Logger
 import scala.concurrent.Future
+import java.net.{URLEncoder, URLDecoder}
 
 /**
  * Created by Norman on 01.04.14.
@@ -32,19 +33,19 @@ case class WikiDBpediaPropertiesRequirePageInformationException() extends Except
 case class Revision(id: Long, timestamp: DateTime, downloadedOn: DateTime, language: String = "en", page: Option[Page], content: Option[String]) {
 
   lazy val subjectURI = page match {
-    case Some(page) => wikiTitle.language.resourceUri.append(wikiTitle.decodedWithNamespace)
+    case Some(page) => "http://dbpedia.org/resource/" + page.dbpediaResourceName
     case None => throw new WikiDBpediaPropertiesRequirePageInformationException
   }
 
   lazy val wikiLanguage = Language(language)
 
   lazy val wikiTitle = page match {
-    case Some(page) => WikiTitle.parse(page.uriTitle, wikiLanguage)
+    case Some(page) => WikiTitle.parse(page.dbpediaResourceName, wikiLanguage)
     case None => throw new WikiDBpediaPropertiesRequirePageInformationException
   }
 
   lazy val dbPediaTitle = page match {
-    case Some(page) => page.uriTitle
+    case Some(page) => page.dbpediaResourceName
     case None => throw new WikiDBpediaPropertiesRequirePageInformationException
   }
 
@@ -55,7 +56,11 @@ abstract trait TRevision extends MongoModel {
 
   protected def collection: JSONCollection
 
-  collection.indexesManager.ensure(Index(Seq(("page.uriTitle", Ascending)), Some("pageUriTitle"),false,true,false,false))
+  collection.indexesManager.ensure(Index(Seq(("page.dbpediaResourceName", Ascending)), Some("dbpediaResourceName"),false,true,false,false))
+
+  collection.indexesManager.ensure(Index(Seq(("page.dbpediaResourceNameDecoded", Ascending)), Some("dbpediaResourceNameDecoded"),false,true,false,false))
+
+
 
   import RevisionJsonConverter._
 
@@ -97,12 +102,18 @@ abstract trait TRevision extends MongoModel {
     Future.sequence(revisions.map{ r => collection.save(r)(executionContext,mongoWrites) })
   }
 
-  def getPageRevsAsJson(pageTitleInUri: String) =
-    collection.find(Json.obj("page.uriTitle" -> pageTitleInUri))
+  def getPageRevsAsJsonByDecodedResourceName(decodedDbpediaResourceName: String) = {
+    collection.find(Json.obj("page.dbpediaResourceNameDecoded" -> decodedDbpediaResourceName))
       .cursor[JsValue].collect[List]()
+  }
+
+  def getPageRevsAsJson(pageTitleInUri: String) = {
+    collection.find(Json.obj("page.dbpediaResourceName" -> pageTitleInUri))
+      .cursor[JsValue].collect[List]()
+  }
 
   def getPageRevs(pageTitleInUri: String) =
-    collection.find(Json.obj("page.uriTitle" -> pageTitleInUri))
+    collection.find(Json.obj("page.dbpediaResourceName" -> pageTitleInUri))
       .cursor[Revision](mongoReads,executionContext).collect[List]()
 
 
@@ -113,12 +124,12 @@ abstract trait TRevision extends MongoModel {
   }
 
   def deleteAllRevisionsOf(articleNameInURL: String) = {
-    val selector = Json.obj("page.uriTitle" -> articleNameInURL)
+    val selector = Json.obj("page.dbpediaResourceName" -> articleNameInURL)
     collection.remove(selector, GetLastError(), false)
   }
 
   private def _getAllPages = {
-    val gropu = GroupField("page.uriTitle")(
+    val gropu = GroupField("page.dbpediaResourceName")(
       //     ("revisions", AddToSet("$_id")),
       ("numberOfRevisions", SumValue(1))
     )

@@ -1,14 +1,13 @@
 package extraction.extractors
 
-//
-
 import org.dbpedia.extraction.wikiparser.WikiTitle
 import org.dbpedia.extraction.wikiparser.WikiParser
 import org.dbpedia.extraction.mappings.{PageContext, MappingExtractor}
-import ch.weisenburger.dbpedia.extraction.mappings.{ExtendedQuad, RuntimeAnalyzer}
+import ch.weisenburger.dbpedia.extraction.mappings.ExtendedQuad
 import models.{Quad, Revision}
 import org.dbpedia.extraction.util.Language
 import org.dbpedia.extraction.sources.WikiPage
+import extraction.parser.AdvancedTimexParser
 
 
 case class NoContentException(message: String) extends Exception(message)
@@ -16,22 +15,20 @@ case class NoContentException(message: String) extends Exception(message)
 case class NoPageException(message: String) extends Exception(message)
 
 // All dependencies we don't know for sure whether they are thread safe or not
-class ThreadUnsafeDependencies {
+class Dependencies() {
 
   val wikiParser = WikiParser.getInstance()
 
-  val englishTemporalMappingExtractor = new MappingExtractor(DBpediaExtractorFrameworkContextFactory.createContext(Language.English))
+  val advancedTimexParser = new AdvancedTimexParser
+
+  val context = DBpediaExtractorFrameworkContextFactory.createContextWithTimexParser(Language.English, advancedTimexParser)
 
 }
 
-object ThreadUnsafeDependencies {
-  def create(callerIdentifier: String) = synchronized {
-    //Logger.info("Creating threadunsafe dependencies for " + callerIdentifier)
-    new ThreadUnsafeDependencies
-  }
-}
 
-class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUnsafeDependencies) {
+class TemporalDBPediaMappingExtractorWrapper(dependencies: Dependencies) {
+
+  val englishTemporalMappingExtractor = new MappingExtractor(dependencies.context)
 
   def extract(rev: Revision): Seq[Quad] = {
     checkPage(rev)
@@ -49,21 +46,15 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
 
   private def checkContent(revision: Revision) =
     if (revision.content.isEmpty)
-      throw NoContentException(s"Revision ${revision.id} of page ${revision.page.get.uriTitle} has no content. Can't extract!")
+      throw NoContentException(s"Revision ${revision.id} of page ${revision.page.get.dbpediaResourceName} has no content. Can't extract!")
 
 
   private def extractWithTemporalMappingExtractor(rev: Revision): Seq[org.dbpedia.extraction.destinations.Quad] = {
     assert(rev.wikiLanguage == Language.English)
-    val analyzer = RuntimeAnalyzer(rev.subjectURI)
-
-    analyzer.startWikiParser
     val page = buildWikiPage(rev.wikiTitle, rev.wikiLanguage, rev.content.get)
     val parsedPage = parseWikiPage(page)
-    analyzer.stopWikiParser
 
-    threadUnsafeDependencies.
-
-      englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
+    englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
   }
 
   private def convertDBPediaExtractorQuadsToCustomQuad(rev: Revision, quad: org.dbpedia.extraction.destinations.Quad) = {
@@ -90,7 +81,8 @@ class TemporalDBPediaMappingExtractorWrapper(threadUnsafeDependencies: ThreadUns
   }
 
   private def parseWikiPage(page: WikiPage) = {
-    threadUnsafeDependencies.wikiParser(page)
+    dependencies.wikiParser(page)
+    //WikiParser.getInstance().apply(page)
   }
 
 

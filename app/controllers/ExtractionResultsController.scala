@@ -3,6 +3,8 @@
  */
 package controllers
 
+import org.slf4j.LoggerFactory
+import play.api.libs.iteratee.Iteratee
 import play.api.mvc.{Action, Controller}
 import scala.io.Codec
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -13,13 +15,16 @@ import actors.events.EventLogger
 import models.EventTypes._
 import models.Quad
 import play.api.Play.current
-import extraction.formatters.{TurtleSaver, QuadsMerger}
+import extraction.formatters.{SingletonPropertyTurtleSaver, QuadsMerger}
+
+import scala.util.{Failure,Success}
 
 
 object ExtractionResultsController extends Controller {
 
   import play.api.libs.json._
 
+  val logger = LoggerFactory.getLogger(getClass)
 
   implicit val codec = Codec.UTF8
 
@@ -89,22 +94,78 @@ object ExtractionResultsController extends Controller {
 
   import scala.concurrent.duration._
 
+  def distinctQuadsToRDF(extractionRunId: String) = Action {
+    Akka.system.scheduler.scheduleOnce(100 microseconds) {
+      logger.debug("Starting distinct quads To RDF Conversion")
+      val turtleSaver =  new SingletonPropertyTurtleSaver(s"data/$extractionRunId-distinct.tt")
+      val enumerator = ExtractionRunPageResult.getEnumerator(extractionRunId)
+      val consume = Iteratee.foreach[ExtractionRunPageResult] { res =>
+        val results = mergeDistinct(res)
+        turtleSaver.write(results, res.page.wikipediaArticleName)
+      }
+      logger.debug("Start merging distinct quads")
+      val eventualResult = enumerator(consume)
+
+
+      eventualResult.onComplete {
+        case Failure(t) => EventLogger raiseExceptionEvent(t)
+        case Success(pageExtractionResults) =>
+          turtleSaver.close
+          logger.debug("Saved quads")
+          EventLogger raise Event(convertedResultsToRDF, s"Converted Results to distinct RDF for Run: ${extractionRunId}")
+      }
+    }
+    Ok
+  }
+
   def quadsToRDF(extractionRunId: String) = Action {
     Akka.system.scheduler.scheduleOnce(100 microseconds) {
-      ExtractionRunPageResult.get(extractionRunId).map {
-        pageExtractionResults =>
-          // speedup by using parallel map
-          val quadsToSave = pageExtractionResults.par.map { page =>
-            // TODO: For now year precision is sufficient
-            val quadsWithYearPrecision = page.quads.map(convertToYearPrecision)
-            QuadsMerger.getDistinctQuads(quadsWithYearPrecision)
-          }
-          TurtleSaver.save(s"data/$extractionRunId.tt", quadsToSave.flatten.seq)
+      logger.debug("Starting quads To RDF Conversion")
+      val turtleSaver =  new SingletonPropertyTurtleSaver(s"data/$extractionRunId.tt")
+      val enumerator = ExtractionRunPageResult.getEnumerator(extractionRunId)
+      val consume = Iteratee.foreach[ExtractionRunPageResult] { res =>
+        val results = mergeValue(res)
+        turtleSaver.write(results, res.page.wikipediaArticleName)
+      }
+      logger.debug("Start merging quads")
+      val eventualResult = enumerator(consume)
+
+
+      eventualResult.onComplete {
+        case Failure(t) => EventLogger raiseExceptionEvent(t)
+        case Success(pageExtractionResults) =>
+          turtleSaver.close
+          logger.debug("Saved quads")
           EventLogger raise Event(convertedResultsToRDF, s"Converted Results to RDF for Run: ${extractionRunId}")
       }
     }
     Ok
   }
+
+  private val mergeDistinct: (ExtractionRunPageResult)=>Seq[Quad] = (res) => {
+    // TODO: For now year precision is sufficient
+    val quadsWithYearPrecision = res.quads.map(convertToYearPrecision)
+    QuadsMerger.getDistinctQuadsPerYear(quadsWithYearPrecision)
+  }
+
+  private val mergeValue: (ExtractionRunPageResult)=>Seq[Quad] = (res) => {
+    // TODO: For now year precision is sufficient
+    val quadsWithYearPrecision = res.quads.map(convertToYearPrecision)
+    QuadsMerger.getDistinctQuadsPerValue(quadsWithYearPrecision)
+  }
+
+//  private val enRes = "^http:\\/\\/en.dbpedia.org\\/resource\\/(.*)$".r
+//
+//  /** The extractor returns resource quads with the english resource uri
+//   *  In order to compare with dbpedia.org sparql endpoint
+//   * @return resources with dpedia.org/resource as subject uri
+//   */
+//  private def transformResourceUri: (Seq[Quad])=>Seq[Quad] = (qs) => qs.map( q => q.subject match {
+//    case enRes(title) => q.copy(subject = s"http://dbpedia.org/resource/$title")
+//    case _ => q
+//  })
+
+
 
   val convertToYearPrecision = (q: Quad) => {
     val from = q.context.get("fromDate") match {
@@ -120,6 +181,7 @@ object ExtractionResultsController extends Controller {
   }
 
   def getResultsAsRDF(extractionRunId: String) = Application.dataFile(extractionRunId + ".tt")
+  def getResultsAsDistinctRDF(extractionRunId: String) = Application.dataFile(extractionRunId + "-distinct.tt")
 
 
   private def quadToStats(extractionResult: ExtractionRunPageResult) = {
@@ -131,7 +193,7 @@ object ExtractionResultsController extends Controller {
       (propertyName, availableYears.size, availableYears)
     }.toSeq
 
-    PageStats(extractionResult.page.uriTitle, result)
+    PageStats(extractionResult.page.dbpediaResourceName, result)
   }
 
   private def reducePredicateQuadsToYears(quads: List[Quad]) = quads

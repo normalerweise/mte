@@ -1,4 +1,5 @@
 import extraction.download.{WikipediaRevisionSelector, WikipediaClient}
+import models.Revision
 import org.specs2.mutable.Specification
 import play.api.test.WithApplication
 
@@ -12,10 +13,10 @@ class RevisionSelector  extends Specification {
 
         //val revisions = RelevantRevisionDownloader.getRevisionStream("Apple_Inc.").toList
         //val selectedRevisions = RelevantRevisionDownloader.selectExtractionRelevantRevisions(revisions)
-        val revisions =  WikipediaRevisionSelector.getRevisionsForExtraction("Apple_Inc.",
+        val revisions =  WikipediaRevisionSelector.getRevisionsForExtraction("HiGear",
           WikipediaRevisionSelector.revisionsAtQuartilesPlusLatestForEachYear)
 
-        //val mhh =  WikipediaClient.downloadRevisionContents(revisions, "Apple_Inc.")
+        val mhh =  WikipediaClient.downloadRevisionContents(revisions, "HiGear", "HiGear")
 
         println( revisions.sortBy(_.timestamp.toDate).reverse.take(5).map(_.timestamp).mkString("\n") )
         //println("")

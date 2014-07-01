@@ -1,6 +1,7 @@
 package actors.events
 
 import akka.actor.{Actor, Props}
+import org.slf4j.LoggerFactory
 import play.api.libs.iteratee.{Enumerator, Concurrent}
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -10,7 +11,6 @@ import akka.pattern.ask
 import play.api.libs.json._
 
 import play.api.Play.current
-import play.api.Logger
 import models.Event
 import models.EventJsonConverter._
 import models.EventTypes._
@@ -46,6 +46,8 @@ object EventLogger {
   val default = Akka.system.actorOf(Props[EventLogger])
   implicit val timeout = Timeout(1 second)
 
+  val log = LoggerFactory.getLogger(getClass)
+
   def raise(e: Event) = {
     default ! e
   }
@@ -55,6 +57,7 @@ object EventLogger {
       "type" -> ex.getClass.getCanonicalName,
       "message" -> ex.getMessage
     )
+    log.error("Exception Event occured",ex)
     raise(Event(exception, ex.getClass.getCanonicalName +": " + ex.getMessage, exceptionJson))
     exceptionJson
   }

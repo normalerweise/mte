@@ -41,6 +41,9 @@ class MteSupervisionStrategy extends SupervisorStrategyConfigurator {
       case ex: reactivemongo.core.errors.GenericDriverException =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
+      case ex: java.util.concurrent.TimeoutException =>
+        EventLogger.raiseExceptionEvent(ex)
+        Restart
       case ex: Exception =>
         EventLogger.raiseExceptionEvent(ex)
         Escalate
@@ -52,6 +55,8 @@ class MteSupervisor extends Actor {
   override val supervisorStrategy: SupervisorStrategy  = new MteSupervisionStrategy().create
 
   def receive = {
-    case p: Props => sender ! context.actorOf(p)
+    case CreateActor(p, name) => sender ! context.actorOf(p, name)
   }
 }
+
+case class CreateActor(p:Props, name: String)

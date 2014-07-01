@@ -4,7 +4,8 @@
 <p>
   <button class="btn btn-primary" ng-click="extractSample()">Extract Sample</button>
   <button class="btn btn-default" ng-click="listExtractedData()">Refresh Extracted Data</button>
-  <button class="btn btn-default" ng-click="convertToRDF()">Convert to Extraction Results to RDF</button>
+  <button class="btn btn-default" ng-click="convertToDistinctRDF()">Convert Extraction Results to distinct RDF</button>
+    <button class="btn btn-default" ng-click="convertToRDF()">Convert Extraction Results RDF</button>
   <button class="btn btn-default" ng-click="extractSampleOccurences()">Extract Sample Occurences in Text</button>
 </p>
 <br/><br/>
@@ -13,14 +14,15 @@
 
 <table ng-table="tableParams" show-filter="true" class="table">
     <tr ng-repeat="pageResult in $data">
-        <td data-title="'Page Title'" sortable="'page.uriTitle'" filter="{ 'page': 'text' }">{{pageResult.page.uriTitle}}</td>
+        <td data-title="'Page Title'" sortable="'page.dbpediaResourceName'" filter="{ 'page': 'text' }">{{pageResult.page.dbpediaResourceName}}</td>
         <td data-title="'No of Quads'" sortable="'numberOfQuads'">{{pageResult.numberOfQuads}}</td>
         <td data-title="'No of Temporal Quads'" sortable="'numberOfTemporalQuads'">{{pageResult.numberOfTemporalQuads}}</td>
-        <td data-title="'Results'"><a ng-show="pageResult.numberOfQuads > 0" target="_blank" href="/api/v1/pages/{{pageResult.page.uriTitle}}/results?extractionRunId={{pageResult.extractionRunId}}">display</a></td>
+        <td data-title="'Results'"><a ng-show="pageResult.numberOfQuads > 0" target="_blank" href="/api/v1/pages/{{pageResult.page.dbpediaResourceName}}/results?extractionRunId={{pageResult.extractionRunId}}">display</a></td>
     </tr>
 </table>
 <br/>
-<a target="_blank" href="/api/v1/extractionruns/{{extractionRunId()}}/get-rdf">display results rdf</a>
-<a target="_blank" href="/api/v1/extractionruns/{{extractionRunId()}}/get-samples">display extracted samples</a>
+<a download="{{extractionRunId()}}-rdf.tt" href="/api/v1/extractionruns/{{extractionRunId()}}/get-rdf">download rdf</a></br>
+<a download="{{extractionRunId()}}-distinct-rdf.tt" href="/api/v1/extractionruns/{{extractionRunId()}}/get-distinct-rdf">download distinct rdf</a></br>
+<a download="{{extractionRunId()}}-samples.zip" href="/api/v1/extractionruns/{{extractionRunId()}}/get-samples">download extracted samples</a></br>
 
 

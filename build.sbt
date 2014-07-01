@@ -9,33 +9,52 @@ name := """mte"""
 
 version := "1.0-SNAPSHOT"
 
+scalaVersion := "2.10.4"
+
+scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+
+// enable improved (experimental) incremental compilation algorithm called "name hashing"
+incOptions := incOptions.value.withNameHashing(true)
+
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
 libraryDependencies ++= Seq(
+  // crosscutting concerns: logging, config, runtime...
+  "org.slf4j" % "slf4j-api" % "1.7.7",
+  "org.slf4j" % "jcl-over-slf4j" % "1.7.7", // redirect the apache http lib logging to slf4j
+  "org.slf4j" % "log4j-over-slf4j" % "1.7.7", // redirect the apache http lib logging to slf4j
+  "ch.qos.logback" % "logback-classic" % "1.1.2",
+  "com.kenshoo" %% "metrics-play" % "0.1.3",
+  "nl.grons" %% "metrics-scala" % "3.2.0_a2.2",
+  // WEB
   "org.webjars" %% "webjars-play" % "2.2.1-2",
   "org.webjars" % "angularjs" % "1.2.14",
   "org.webjars" % "angular-ui-router" % "0.2.8-2",
   "org.webjars" % "angular-ui-bootstrap" % "0.10.0-1",
   "org.webjars" % "angular-moment" % "0.6.2",
   "org.webjars" % "momentjs" % "2.5.1-1",
-  "org.dbpedia.extraction" % "core" % "4.0-SNAPSHOT",
-  "de.unihd.dbs" % "heideltime-standalone" % "1.5",
+  // nlp
+  "org.dbpedia.extraction" % "core" % "4.0-SNAPSHOT"
+    exclude("log4j", "log4j"),
+  "de.unihd.dbs" % "heideltime-standalone" % "1.7",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.3.1",
-  "org.apache.jena" % "jena-arq" % "2.11.1"
-    exclude("log4j", "log4j")
-    exclude("org.slf4j", "slf4j-log4j12"),
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
-    exclude("org.apache.logging.log4j", "log4j-to-slf4j"),
-   // exclude("org.apache.logging.log4j", "log4j-core")
-   // exclude("org.apache.logging.log4j","log4j-api"),
-  "com.kenshoo" %% "metrics-play" % "0.1.3",
   "de.uni-mannheim.dws" % "WikiParser" % "0.0.1-SNAPSHOT"
-    exclude("commons-logging","commons-logging"),
-  "ch.weisenburger" %% "mtner" % "1.0-SNAPSHOT",
-  "org.slf4j" % "log4j-over-slf4j" % "1.7.5",
-  "org.slf4j" % "jcl-over-slf4j" % "1.7.5",
-  "nl.grons" %% "metrics-scala" % "3.2.0_a2.2"
-)     
+    exclude("commons-logging","commons-logging")
+    exclude("edu.stanford.nlp", "stanford-corenlp")
+    exclude("log4j", "log4j"),
+  "ch.weisenburger" %% "mtner" % "1.0-SNAPSHOT"
+    exclude("edu.stanford.nlp", "stanford-corenlp"),
+  // SPARQL
+  "org.apache.jena" % "jena-arq" % "2.11.2"
+    exclude("log4j", "log4j")
+    exclude("org.slf4j", "slf4j-log4j12")
+    exclude("commons-logging", "commons-logging"),
+  // DATA
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
+  //  exclude("org.apache.logging.log4j", "log4j-to-slf4j")
+  //  exclude("org.apache.logging.log4j", "log4j-core")
+  //  exclude("org.apache.logging.log4j", "log4j-api")
+)
 
 play.Project.playScalaSettings
 

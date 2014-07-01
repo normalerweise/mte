@@ -10,7 +10,8 @@ import play.api.libs.json.Json
 import models.{Revision, Event}
 import models.EventTypes._
 import extraction.download.{WikipediaClient, WikipediaRevisionSelector}
-import extraction.download.WikipediaClient.WikiPageDoesNotExistException
+import extraction.download.WikipediaClient.{UnableToFetchURLAsJSONException, WikiPageDoesNotExistException}
+import java.net.URLDecoder
 
 
 // Commands for the article downloader actor
@@ -43,39 +44,112 @@ class ArticleDownloaderActor extends Actor with ActorLogging with Instrumented {
           Json.obj("runtime" -> runtime, "uriTitle" -> articleNameInUrl))
 
     } catch {
+      case ex: UnableToFetchURLAsJSONException =>
+        EventLogger raise Event(unableToFetchRevisionInvalidJson,
+          s"($number/$totalNumber) Unable to fetch revisions, invalid JSON: " + articleNameInUrl); None
       case ex: WikiPageDoesNotExistException =>
         EventLogger raise Event(wikipageDoesNoExist,
           s"($number/$totalNumber) Wikipage does not exist: " + articleNameInUrl); None
+      case ex: AmbigousRedirectException =>
+        EventLogger raise Event(ambiguousRedirect,
+          s"($number/$totalNumber) $articleNameInUrl ${ex.getMessage}"); None
     }
   }
 
-  private def downloadAndSaveArticle(articleNameInUrl: String)(implicit extractionRunId: Option[BSONObjectID]) = try {
+  private def downloadAndSaveArticle(dbPediaResourceName: String)(implicit extractionRunId: Option[BSONObjectID]) = try {
 
-    val en = metrics.timer("enumerate_and_select_revisions")
-    val dl = metrics.timer("download_revision_contents")
     val st = metrics.timer("store_revision_contents_to_mongo")
 
-    val revisions = en.time {
-      WikipediaRevisionSelector.getRevisionsForExtraction(articleNameInUrl,
-        WikipediaRevisionSelector.revisionsAtQuartilesPlusLatestForEachYear)
-    }
+    val wikipediaArticleName = Util.decodeResourceName(dbPediaResourceName)
 
-    val revisionsWithContent = dl.time {
-      WikipediaClient.downloadRevisionContents(revisions, articleNameInUrl)
+      //URLDecoder.decode(dbPediaResourceName, "UTF-8")
+
+    val revisionsWithContent = {
+      val revsWithContent = selectAndDownload(wikipediaArticleName, dbPediaResourceName).toSeq
+       shouldRedirect(revsWithContent) match {
+        case Some(targetArtcitleNameInUrl) => selectAndDownload(targetArtcitleNameInUrl, dbPediaResourceName)
+        case None => revsWithContent
+      }
     }
 
     val result = st.time {
-      Await.result(Revision.deleteAllRevisionsOf(articleNameInUrl), 5 seconds)
-      Await.result(Revision.saveBulk(revisionsWithContent), 5 seconds)
+      Await.result(Revision.deleteAllRevisionsOf(dbPediaResourceName), 5 seconds)
+      Await.result(Revision.saveBulk(revisionsWithContent), 10 seconds)
     }
     result.map { lastError => lastError.ok match {
       case false => {
-        val message = s"$articleNameInUrl: Save failed: [lastError=$lastError]"
+        val message = s"$dbPediaResourceName: Save failed: [lastError=$lastError]"
         log.error(message)
         EventLogger raise Event(exception, message)
       }
       case true => // noop
     }
+    }
+
+  }
+
+  private val originalArticleName = (originalArticleNameInUrl: String,r: Revision) => {
+   val oldPage = r.page.get
+   r.copy(page = Some(oldPage.copy(dbpediaResourceName = originalArticleNameInUrl)))
+  }
+
+
+
+
+  /** Regular Expression to determine redirects in the content part of a revision query
+   *
+   * Examples which should result in a group match,
+   *  which indicates article name the redirect points to:
+   *  - "#REDIRECT [\[Rolls-Royce Holdings]\]\n{{R from move}}" -> Rolls-Royce Holdings
+   *  - "#REDIRECT [\[Rolls-Royce Holdings]\]{{R from move}}" -> Rolls-Royce Holdings
+   *  - "#REDIRECT [\[Rolls-Royce Holdings]\]" -> Rolls-Royce Holdings
+   */
+  private val redirectRegex = """(?i)#REDIRECT \[\[(.*)\]\]\s*.*""".r
+  
+  case class AmbigousRedirectException(message: String) extends Exception(message)
+  def shouldRedirect(revs: Seq[Revision]) = {
+    val redirectRevisions = revs.filter(_.content.get.toUpperCase.startsWith("#REDIRECT"))
+
+    val percentOfRedirectRevisions = redirectRevisions.size.toDouble / (revs.size)
+
+    // Decide on the amount of redirect revisions whether we use the current
+    // or the redirect target page
+    if(percentOfRedirectRevisions > 0.5) {
+    val redirectTargets = redirectRevisions
+     .flatMap { rev =>
+      val m  = redirectRegex.findAllIn(rev.content.get)
+      if(m.hasNext) Some(m.group(1), rev.id) else None
+     }
+     .filterNot( _._1.toLowerCase.contains("disambiguation") )
+     .groupBy(_._1)
+     .map(targetAndRevs =>
+      (targetAndRevs._1, targetAndRevs._2.map(_._2).toList.sorted.last ))
+
+     if(redirectTargets.size > 1) {
+      //throw AmbigousRedirectException("Ambiguous redirects: " + redirectTargets.mkString(", "))
+       val latestRedirect = redirectTargets.toList.sortBy(_._2).last
+       Some(latestRedirect._1)
+     } else if(redirectTargets.size == 1) {
+       Some(redirectTargets.head._1)
+     } else {
+       None
+     }
+    }else{
+      None
+    }
+  }
+
+  def selectAndDownload(wikipediaArticleName: String, dbPediaResourceName: String) = {
+    val en = metrics.timer("enumerate_and_select_revisions")
+    val dl = metrics.timer("download_revision_contents")
+
+    val revisions = en.time {
+      WikipediaRevisionSelector.getRevisionsForExtraction(wikipediaArticleName,
+        WikipediaRevisionSelector.revisionsAtQuartilesPlusLatestForEachYear)
+    }
+
+    dl.time {
+      WikipediaClient.downloadRevisionContents(revisions, wikipediaArticleName, dbPediaResourceName)
     }
 
   }

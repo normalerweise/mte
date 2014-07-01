@@ -10,7 +10,9 @@ import play.api.libs.json.Json
 import reactivemongo.bson.BSONObjectID
 import play.api.libs.concurrent.Execution.Implicits._
 import org.dbpedia.extraction.wikiparser.WikiParserException
-import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, Dependencies}
+import org.github.jamm.MemoryMeter
+import org.slf4j.LoggerFactory
 
 
 case class NoRevisionDataException(message: String) extends Exception(message)
@@ -19,10 +21,20 @@ case class ExtractInfoboxAndSaveQuads(extractionRunId: BSONObjectID, extractionR
 
 class TemporalInfoboxExtractorActor extends Actor {
 
-  val extractor = new TemporalDBPediaMappingExtractorWrapper(ThreadUnsafeDependencies.create(self.path.name))
+  val logger = LoggerFactory.getLogger(getClass)
+
+  val dependencies = new Dependencies()
+  val extractor = new TemporalDBPediaMappingExtractorWrapper(dependencies)
+
+
 
   override def preStart =  {
     EventLogger raise Event(initializedInfoboxExtractor, s"Initialized Infobox Extractor Actor: ${self.path.name}")
+  }
+
+  override def preRestart(reason: Throwable, message: Option[Any]) =  {
+    EventLogger raise Event(restartedInfoboxExtractor,
+      s"Restarted Infobox Extractor Actor ${self.path.name}: ${message.getOrElse("")}")
   }
 
   override def postStop = {
@@ -60,17 +72,43 @@ class TemporalInfoboxExtractorActor extends Actor {
   }
 
   private def extractAndSafe(extractionRunId: BSONObjectID, extractionRunDescription: String, pageTitleInUri: String) =  {
-    val revisions = Await.result(Revision.getPageRevs(pageTitleInUri), 5 seconds)
+    logger.debug(s"Load revisions of $pageTitleInUri")
+    val revisions = Await.result(Revision.getPageRevs(pageTitleInUri), 10 seconds)
     if(revisions.size == 0){
       throw new NoRevisionDataException("")
     }
     val page = revisions.head.page.get
-
-    val (quads, runtime) = Util.measure( revisions.flatMap( rev => extractor.extract(rev)))
+    val (quads, runtime) = Util.measure( revisions.flatMap { rev =>
+      logger.debug(s"Extracting revision ${rev.id} resource ${rev.page.get.dbpediaResourceName}")
+      extractor.extract(rev)
+    })
 
     val pageQuads = ExtractionRunPageResult(extractionRunId, extractionRunDescription, page, quads)
     //Logger.info(pageQuads.toString)
     ExtractionRunPageResult.save(pageQuads).onFailure { case t => throw t}
+    logger.debug(s"Finished and Saved page results of $pageTitleInUri")
     runtime
+  }
+
+  context.system.scheduler.schedule(10 seconds, 30 minutes) {
+    reportExtractorMemoryUsage()
+  }
+
+  var meterIsInstrumented = true
+  val meter = new MemoryMeter()
+  val memoryLogger =  LoggerFactory.getLogger("TemporalInfoboxExtractorActorMemory")
+  private def reportExtractorMemoryUsage() = try {
+    if (meterIsInstrumented && memoryLogger.isDebugEnabled) {
+      memoryLogger.debug(s"""
+      | TIE ${self.path.name} extractor: ${meter.measure(extractor)/1024 } kb;
+      | TIE ${self.path.name} extractor deep: ${meter.measureDeep(extractor)/1024} kb;
+      | TIE ${self.path.name} timex parser: ${meter.measure(dependencies.advancedTimexParser)/1024 } kb;
+      | TIE ${self.path.name} timex parser deep: ${meter.measureDeep(dependencies.advancedTimexParser)/1024} kb;
+      """.stripMargin)
+    }
+  }catch {
+    case ex: java.lang.IllegalStateException =>
+      meterIsInstrumented = false
+      memoryLogger.debug(ex.getMessage)
   }
 }

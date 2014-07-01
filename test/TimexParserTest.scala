@@ -1,6 +1,6 @@
 import actors.Util
-import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
-import extraction.formatters.TurtleSaver
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, Dependencies}
+import extraction.formatters.SingletonPropertyTurtleSaver
 import org.joda.time.DateTime
 import models.{Page, Revision}
 import play.api.test.FakeApplication
@@ -15,11 +15,11 @@ class TimexParserTest extends Specification {
 
   "Extract" should {
     "fin history" in new WithApplication {
-      val dependencies =  ThreadUnsafeDependencies.create("tester")
+      val dependencies =  new Dependencies()
       val extractor = new TemporalDBPediaMappingExtractorWrapper(dependencies)
 
-      val revisions = Await.result(Revision.getPageRevs("Apple_Inc."), Duration(5000, MILLISECONDS))
-      val frevs = revisions.filter(_.id == 521114821)
+      val revisions = Await.result(Revision.getPageRevs("Adani_Group"), Duration(5000, MILLISECONDS))
+      val frevs = revisions.filter(_.id == 480510778)
       val page = revisions.head.page.get
 
       val quads = frevs.flatMap( rev => extractor.extract(rev))
@@ -28,32 +28,9 @@ class TimexParserTest extends Specification {
 
 
 
-      TurtleSaver.save("data/test.tt", quads)
+      //TurtleSaver.initDestination("data/test.tt", quads)
       println("done")
     }
 
   }
-}
-
-
-object TestTimexParser extends App {
-
-
-//  val parser = new AdvancedTimexParser()
-//
-//  val node  = TextNode("blah 1940",1)
-//  val result = parser.parse(node, "blah")
-//
-//  println(result)
-
-  //val dt = new DateTime();
-  //val fmt = DateTimeFormat.forPattern("yyyy-MM-dd");
-  //val  dt = fmt.parseDateTime("2010");
-  //val str ="2010-10"
-  //println(str.take(4))
-
-
-
-
-
 }

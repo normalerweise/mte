@@ -32,7 +32,9 @@ GET  /api/v1/extractionruns/:id/list-results        controllers.ExtractionResult
 GET  /api/v1/extractionruns/:id/stats               controllers.ExtractionResultsController.getExtractionRunStats(id)
 GET  /api/v1/extractionruns/:id/event-stats         controllers.ExtractionResultsController.getExtractionRunEventStats(id)
 GET  /api/v1/extractionruns/:id/quads-to-rdf        controllers.ExtractionResultsController.quadsToRDF(id)
+GET  /api/v1/extractionruns/:id/distinct-quads-to-rdf        controllers.ExtractionResultsController.distinctQuadsToRDF(id)
 GET  /api/v1/extractionruns/:id/get-rdf             controllers.ExtractionResultsController.getResultsAsRDF(id)
+GET  /api/v1/extractionruns/:id/get-distinct-rdf             controllers.ExtractionResultsController.getResultsAsDistinctRDF(id)
 
 
 # SPARQL Queries
@@ -60,7 +62,8 @@ GET /api/v1/pages/:pageTitle/download               controllers.PageController.d
 GET /api/v1/events/latest                           controllers.EventsController.getLastNEvents(number: Int)
 
 
-#GET /test/create/:name controllers.MongoTest.create(name)
+#GET /test/create/:name controllers.Test.create(name)
+GET /test/split/:name controllers.Test.split(name)
 #GET /test/list controllers.MongoTest.list
 GET  /admin/config                       controllers.Application.config
 GET  /admin/metrics                      com.kenshoo.play.metrics.MetricsController.metrics

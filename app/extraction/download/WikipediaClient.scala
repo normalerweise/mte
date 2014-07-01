@@ -1,6 +1,6 @@
 package extraction.download
 
-import java.net.URL
+import java.net.{URLEncoder, URLDecoder, URL}
 import scala.io.{Source, Codec}
 import play.api.libs.json._
 import models.{Event, Page, Revision}
@@ -27,13 +27,12 @@ object WikipediaClient {
     * Downloads a set of revisions belonging to the same Wikipedia article
     *
     * @param revisions a list of revisions which should be downloaded. Usually content property is None
-    * @param articleNameInUrl articles name as shown in the Wikipedia URL
     * @return a list of revisions which content property is filled, revisions with no content
     *         (e.g. deleted revisions) are filtered out
     */
-  def downloadRevisionContents(revisions: Seq[Revision], articleNameInUrl: String) = {
-    val revisionsWithContent = fetchRevisionContents(revisions, articleNameInUrl)
-    filterDeletedRevisions(revisionsWithContent, articleNameInUrl)
+  def downloadRevisionContents(revisions: Seq[Revision], wikipediaArticleName: String, dbPediaResourceName: String) = {
+    val revisionsWithContent = fetchRevisionContents(revisions, wikipediaArticleName, dbPediaResourceName)
+    filterDeletedRevisions(revisionsWithContent, wikipediaArticleName)
   }
 
 
@@ -82,7 +81,7 @@ object WikipediaClient {
   }
 
 
-  private def fetchRevisionContents(revisions: Seq[Revision], pageTitleInUri: String) = {
+  private def fetchRevisionContents(revisions: Seq[Revision], wikipediaArticleName: String, dbPediaResourceName: String) = {
     // Media Wiki API allows max 50 revisions per request
     // => use 40 in order to have some buffer before we exhaust the API
     revisions.grouped(40).flatMap { revisionBatch =>
@@ -92,7 +91,7 @@ object WikipediaClient {
       // fits into one query; Refine implementation once needed
       assert(shouldContinue(queryResult) == None)
 
-      val page = buildPage(queryResult, pageTitleInUri)
+      val page = buildPage(queryResult, wikipediaArticleName, dbPediaResourceName)
       buildRevisionsWithContentAndPageFrom(queryResult, page)
     }.toSeq
   }
@@ -116,30 +115,36 @@ object WikipediaClient {
       .map(revArray => revArray.as[List[JsObject]])
       .flatten
 
-  private def buildPage(queryResult: JsValue, pageTitleInUri: String) = {
+  private def buildPage(queryResult: JsValue, wikipediaArticleName: String, dbPediaResourceName: String) = {
     val id = (queryResult \ "query" \ "pages" \\ "pageid").headOption match {
       case Some(jsVal) => jsVal.asOpt[Long] match {
         case Some(long) => long
-        case None => throw new ResultParsingException(pageTitleInUri + ": Unable to parse pageId as Long")
+        case None => throw new ResultParsingException(wikipediaArticleName + ": Unable to parse pageId as Long")
       }
-      case None => throw new ResultParsingException(pageTitleInUri + ": Unable to find pageId")
+      case None => throw new ResultParsingException(wikipediaArticleName + ": Unable to find pageId")
     }
 
     val title = (queryResult \ "query" \ "pages" \\ "title").headOption match {
       case Some(jsVal) => jsVal.asOpt[String] match {
         case Some(str) => str
-        case None => throw new ResultParsingException(pageTitleInUri + ": Unable to parse page title as String")
+        case None => throw new ResultParsingException(wikipediaArticleName + ": Unable to parse page title as String")
       }
-      case None => throw new ResultParsingException(pageTitleInUri + ": Unable to find page title")
+      case None => throw new ResultParsingException(wikipediaArticleName + ": Unable to find page title")
     }
-
-    Page(id, title, pageTitleInUri)
+    val decodedDbPediaResourceName = actors.Util.decodeResourceName(dbPediaResourceName)
+    Page(id, title, dbPediaResourceName, decodedDbPediaResourceName, wikipediaArticleName)
   }
 
-
-  private def fetchUrlAsJson(url: URL) = {
+  case class UnableToFetchURLAsJSONException(message: String, t: Throwable) extends Exception(message, t)
+  private def fetchUrlAsJson(url: URL) = try {
     val result = Source.fromURL(url)
-    Json.parse(result.getLines.mkString)
+    val jsString = result.getLines.mkString
+    Json.parse(jsString)
+  } catch {
+    case ex: com.fasterxml.jackson.core.JsonParseException =>
+      throw UnableToFetchURLAsJSONException(s"Fetching $url did not return valid JSON", ex)
+    case ex: com.fasterxml.jackson.databind.JsonMappingException =>
+      throw UnableToFetchURLAsJSONException(s"Fetching $url did not return mapable JSON", ex)
   }
 
   private def buildFetchRevisionsWithContentQueryUrl(revs: Seq[Revision]) = {
@@ -148,8 +153,7 @@ object WikipediaClient {
   }
 
   private def buildContinueRevisionEnumerationURL(pageName: String, continueId: Long) = {
-    // TODO: strange....
-    val encPageName = pageName.replace("&", "%26")
+    val encPageName = URLEncoder.encode(pageName, "UTF-8")
     val query = s"action=query&prop=revisions&titles=${encPageName}&rvlimit=max&continue=&rvcontinue=${continueId}&rvend=2000-01-01T00:00:00Z&rvprop=timestamp|ids&format=json"
     buildWikiURLwithQuery(query)
   }
@@ -163,7 +167,8 @@ object WikipediaClient {
   }
 
   private def buildInitialRevisionEnumerationURL(pageName: String) = {
-    val encPageName = pageName.replace("&", "%26")
+    //val encPageName = pageName.replace("&", "%26")
+    val encPageName = URLEncoder.encode(pageName, "UTF-8")
     val query = s"action=query&prop=revisions&titles=${encPageName}&rvlimit=max&continue=&rvend=2000-01-01T00:00:00Z&rvprop=timestamp|ids&format=json"
     buildWikiURLwithQuery(query)
   }

@@ -31,7 +31,7 @@ object FileUtil {
     Files.writeFile(ensureExists(path), content)
 
 
-  def ensureExists(path: String) = {
+  def ensureExists(path: String): File = {
     val f = new File(path)
     if (!f.exists()) {
       f.getParentFile.mkdirs

@@ -18,35 +18,58 @@ object QuadsMerger {
     case 1 => quads(0) // return the single quad
     case 2 =>
       // Either the values differ or it does not matter which one we choose.
-      // Hard to state provenance, assumption => later (higher) revisions are more reliable
+      // Hard to state 'trust', assumption => later (higher) revisions are more reliable
       quads.sortBy(_.context.get("sourceRevision").getOrElse("-1").toInt).last
     case x if x > 2 =>
       // Find the most frequent value, keep it simple -> in case of multiple values with highest frequency take the first
       val sorted = quads.groupBy(_.obj).toSeq.sortBy(_._2.length * -1)
 
       val mostFrequent = sorted.headOption.get // one value must exist
-    val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))
+      val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))
 
+      // competing quad values -> more trust in later revisions
       if (mostFrequent._2.length <= secondMostFrequent._2.length) {
-        println("Competing quad values: \n" + mostFrequent._2.head + ";\n" + secondMostFrequent._2.head)
+        val mostFrequentRev =
+          mostFrequent._2.sortBy(_.context.get("sourceRevision").getOrElse("-1").toInt)
+            .last.context.get("sourceRevision").getOrElse("-1").toInt
+        val secondMostFrequentRev =
+          secondMostFrequent._2.sortBy(_.context.get("sourceRevision").getOrElse("-1").toInt)
+            .last.context.get("sourceRevision").getOrElse("-1").toInt
+
+        if(mostFrequentRev > secondMostFrequentRev) {
+          mostFrequent._2.head
+        }else{
+          secondMostFrequent._2.head
+        }
+      }else {
+        mostFrequent._2.head
       }
-      mostFrequent._2.head
   }
 
   // assumes quadsOfWikiPage have the same subject
-  def getDistinctQuads(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
+  def getDistinctQuadsPerYear(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
     val groupedQuads = quadsOfWikiPage.groupBy(_.predicate)
     val result = groupedQuads.map { quads =>
-      if (OntologyUtil.isOntologyPredicate(quads._1)) {
-        selectOneQuadPerValue(quads._2)
-      } else {
+      if (OntologyUtil.isTemporalPredicate(quads._1)) {
         val temporallyGroupedQuads = groupByTemporalInformation(quads._2)
         val selectedQuads = temporallyGroupedQuads.map(q => selectQuadsByValue(q._2))
         selectedQuads.toSeq
-      }
+      } else {
+      selectOneQuadPerValue(quads._2)
+    } 
 
     }
     result.flatten.toSeq
+  }
+
+  // assumes quadsOfWikiPage have the same subject
+  def getDistinctQuadsPerValue(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
+    val groupedQuads = quadsOfWikiPage.groupBy(q => q.predicate + q.obj + q.context.get("fromDate").getOrElse(""))
+    // select the first one
+    val result = groupedQuads.map { case (_,quads) =>
+      quads.head
+    }
+    result.toSeq
   }
 
   def selectOneQuadPerValue(quads: Seq[Quad])= {

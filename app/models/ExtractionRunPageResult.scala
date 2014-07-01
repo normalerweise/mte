@@ -29,13 +29,13 @@ object ExtractionRunPageResult extends MongoModel {
 
   private def collection: JSONCollection = db.collection[JSONCollection]("extraction_run_page_results")
 
-  collection.indexesManager.ensure(Index(Seq(("page.uriTitle", Ascending)), Some("pageUriTitle"), false, true, false, false))
+  collection.indexesManager.ensure(Index(Seq(("page.dbpediaResourceName", Ascending)), Some("dbpediaResourceName"), false, true, false, false))
 
   def applyAll(id: String, extractionRunId: BSONObjectID, extractionRunDescription: String, page: Page, quads: List[Quad]) =
     new ExtractionRunPageResult(id, extractionRunId, extractionRunDescription, page, quads)
 
   def apply(extractionRunId: BSONObjectID, extractionRunDescription: String, page: Page, quads: List[Quad]) =
-    new ExtractionRunPageResult(s"${extractionRunId.stringify}:${page.uriTitle}", extractionRunId, extractionRunDescription, page, quads)
+    new ExtractionRunPageResult(s"${extractionRunId.stringify}:${page.dbpediaResourceName}", extractionRunId, extractionRunDescription, page, quads)
 
   import ExtractionRunPageResultJsonConverter._
 
@@ -44,11 +44,11 @@ object ExtractionRunPageResult extends MongoModel {
   }
 
   def getPageQuadsAsJson(pageTitleInUri: String) =
-    collection.find(Json.obj("page.uriTitle" -> pageTitleInUri))
+    collection.find(Json.obj("page.dbpediaResourceName" -> pageTitleInUri))
       .cursor[JsValue].collect[List]()
 
   def getPageQuads(pageTitleInUri: String) =
-    collection.find(Json.obj("page.uriTitle" -> pageTitleInUri))
+    collection.find(Json.obj("page.dbpediaResourceName" -> pageTitleInUri))
       .cursor[ExtractionRunPageResult].collect[List]()
 
   def getAsJson(extractionRunId: String) =
@@ -59,6 +59,10 @@ object ExtractionRunPageResult extends MongoModel {
     collection.find(Json.obj("extractionRunId" -> extractionRunId))
       .cursor[ExtractionRunPageResult].collect[Seq]()
 
+  def getEnumerator(extractionRunId: String) =
+    collection.find(Json.obj("extractionRunId" -> extractionRunId))
+      .cursor[ExtractionRunPageResult].enumerate()
+
 
 
   def getAllAsJson =
@@ -68,11 +72,11 @@ object ExtractionRunPageResult extends MongoModel {
 
 
   def getAsJson(extractionRunId: String, pageTitleInUri: String) =
-    collection.find(Json.obj("extractionRunId" -> extractionRunId, "page.uriTitle" -> pageTitleInUri))
+    collection.find(Json.obj("extractionRunId" -> extractionRunId, "page.dbpediaResourceNameDecoded" -> pageTitleInUri))
       .cursor[JsValue].headOption
 
   def listAsJson(extractionRunId: String) =
-    collection.find(Json.obj("extractionRunId" -> extractionRunId), Json.obj("extractionRunId" -> "", "page.uriTitle" -> "", "numberOfQuads" -> "", "numberOfTemporalQuads" -> "" ))
+    collection.find(Json.obj("extractionRunId" -> extractionRunId), Json.obj("extractionRunId" -> "", "page.dbpediaResourceName" -> "", "numberOfQuads" -> "", "numberOfTemporalQuads" -> "" ))
       .cursor[JsValue].collect[Seq]()
 
 

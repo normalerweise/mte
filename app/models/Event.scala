@@ -31,13 +31,17 @@ object EventTypes extends Enumeration {
   val extractedPageRevisions = EventTypeValue("extractedPageRevisions", "Extracted Page Revisions")
   val droppedRevisions = EventTypeValue("droppedRevisions", "Dropped Revisions")
   val wikipageDoesNoExist = EventTypeValue("wikipageDoesNoExist", "Wiki page does not exist")
+  val unableToFetchRevision = EventTypeValue("unableToFetchRevision", "Unable to fetch Revision")
   val wikipageNotInCache = EventTypeValue("wikipageNotinCache", "Wiki page not in cache")
   val initializedInfoboxExtractor = EventTypeValue("initializedInfoboxExtractor", "Initialized Infobox extractor")
+  val restartedInfoboxExtractor = EventTypeValue("restartedInfoboxExtractor", "Restarted Infobox extractor")
   val stoppedInfoboxExtractor = EventTypeValue("stoppedInfoboxExtractor", "Stopped Infobox extractor")
   val noRevisionDataFound = EventTypeValue("noRevisionDataFound", "No Revision Data found")
   val unableToParseWikiContent = EventTypeValue("unableToParseWikiContent", "Unable To Parse Wiki Content")
   val exception = EventTypeValue("exception", "Exception Occured")
   val convertedResultsToRDF = EventTypeValue("convertedResultsToRDF", "Converted Extraction Result to RDF")
+  val ambiguousRedirect = EventTypeValue("ambiguousRedirect", "Ambiguous Redirect")
+  val unableToFetchRevisionInvalidJson = EventTypeValue("unableToFetchRevisionInvalidJson", "Invalid JSON")
 
   def withNameOpt(str: String):Option[EventType] = {
     EventTypes.values.find( _.toString == str).asInstanceOf[Option[EventType]]
@@ -72,6 +76,10 @@ object Event extends MongoModel {
   def apply(typ: EventType, customDescription: String, details: JsValue)(implicit extractionRunId: Option[BSONObjectID]) =
     new Event(BSONObjectID.generate, extractionRunId, typ, new DateTime, customDescription, Some(details))
 
+
+//  def apply(id: BSONObjectID, extractionRunId: Option[BSONObjectID], typ: EventType, timestamp: DateTime, caption: String, details: Option[JsValue]) =
+//    new Event(id, extractionRunId, typ, timestamp, caption, details)
+
   def save(e: Event) = collection.insert(e)
 
   def listAsJson(n: Int) = collection.find(Json.obj())
@@ -86,6 +94,20 @@ object Event extends MongoModel {
     val command = Aggregate("events", Seq( matchh, gropu ))
 
     db.command(command).map(res => res.map( bdoc => BSONFormats.toJSON(bdoc) ))
+  }
+
+  def deleteEventsOfExtractionRun(extractionRunId: String) = {
+      val selector = Json.obj("extractionRunId" -> extractionRunId)
+      collection.remove(selector, GetLastError(), false)
+  }
+
+  def extractedArticlesOfExtractionRun(extractionRunId: String) = {
+    val selector = Json.obj(
+      "extractionRunId" -> extractionRunId,
+       "$or" -> Json.arr(Json.obj("type" -> "extractedPageRevisions" ), Json.obj("type" -> "noRevisionDataFound" ))
+    )
+    collection.find(selector)
+      .cursor[Event](eventRead,executionContext).collect[List]()
   }
 
 }
@@ -107,6 +129,15 @@ object EventJsonConverter {
       case None => JsError("unable to read event type")
     }
   }
+
+  implicit val eventRead: Reads[Event] = (
+    (JsPath \ "_id").read[BSONObjectID] and
+      (JsPath \ "extractionRunId").readNullable[BSONObjectID] and
+      (JsPath \ "type").read[EventType] and
+      (JsPath \ "timestamp").read[DateTime] and
+      (JsPath \ "description").read[String] and
+      (JsPath \ "details").readNullable[JsValue]
+    )(Event.apply(_,_,_,_,_,_))
 
 
   implicit val eventWrite: Writes[Event] = (

@@ -1,20 +1,19 @@
 package extraction.parser
 
 import de.unihd.dbs.heideltime.standalone.HeidelTimeStandalone
+import de.unihd.dbs.heideltime.standalone.components.PartOfSpeechTagger
+import de.unihd.dbs.heideltime.standalone.components.impl.{TimeMLResultFormatter, JCasFactoryImpl, UimaContextImpl}
 import de.unihd.dbs.uima.annotator.heideltime.resources.Language
 import de.unihd.dbs.heideltime.standalone.DocumentType
 import org.dbpedia.extraction.wikiparser.Node
 import org.dbpedia.extraction.dataparser.DataParser
+import scala.io.Source
 import scala.xml.XML
 import org.apache.uima.UIMAFramework
 import org.apache.uima.util.XMLInputSource
 import de.unihd.dbs.heideltime.standalone.Config
-import de.unihd.dbs.heideltime.standalone.components.impl._
 import de.unihd.dbs.uima.annotator.heideltime.HeidelTime
 import java.util.Properties
-import de.unihd.dbs.heideltime.standalone.components.PartOfSpeechTagger
-import scala.Some
-import ch.weisenburger.dbpedia.extraction.mappings.RuntimeAnalyzer
 import org.slf4j.LoggerFactory
 
 
@@ -68,7 +67,7 @@ object AdvancedTimexParser {
   def createPosTagger = {
     val settings = new Properties();
 
-    val partOfSpeechTagger = new StanfordPOSTaggerWrapper();
+    val partOfSpeechTagger = new de.unihd.dbs.heideltime.standalone.components.impl.StanfordPOSTaggerWrapper();
     settings.put(PartOfSpeechTagger.STANFORDPOSTAGGER_ANNOTATE_TOKENS, Boolean.box(true));
     settings.put(PartOfSpeechTagger.STANFORDPOSTAGGER_ANNOTATE_SENTENCES, Boolean.box(true));
     settings.put(PartOfSpeechTagger.STANFORDPOSTAGGER_ANNOTATE_POS, Boolean.box(true));
@@ -76,6 +75,7 @@ object AdvancedTimexParser {
     settings.put(PartOfSpeechTagger.STANFORDPOSTAGGER_CONFIG_PATH, Config.get(Config.STANFORDPOSTAGGER_CONFIG_PATH));
 
     partOfSpeechTagger.initialize(settings);
+    //partOfSpeechTagger.initialize(uimaContext)
     partOfSpeechTagger
   }
 
@@ -126,7 +126,7 @@ class AdvancedTimexParser extends DataParser {
         None
       }
       case saxe: org.xml.sax.SAXParseException => {
-        logger.error("", saxe)
+        logger.error("SAXPE in Value: " + stringValue, saxe)
         None
       }
     }
@@ -146,27 +146,25 @@ class AdvancedTimexParser extends DataParser {
     */
   def parseDates(str: String, subjectUri: String): (Option[String], Option[String]) = {
 
-    val analyzer = RuntimeAnalyzer(subjectUri)
 
-    analyzer.jcas {
       jcas.reset()
-      jcas.setDocumentText(escapeStr(str));
-    }
+      jcas.setDocumentText(escapePredefinedXMLCharacters(str));
 
-    analyzer.startPosTagger
+
+
     posTagger.process(jcas);
-    analyzer.stopPosTagger
 
-    analyzer.startHeideltime
+
+
     heidelTime.process(jcas);
-    analyzer.stopHeidelTime
 
-    analyzer.formatTIMEX {
+
+
       val timeMLString = resultFormatter.format(jcas)
 
       val xml = xmlParser.loadString(timeMLString)
 
-      val timexes = (xml \\ "TIMEX3")
+      val timexes = (xml \\ "TIMEX3").filter( n => (n \ "@type").text == "DATE" )
       timexes.length match {
         case 0 => (None, None)
         case 1 => (getTimexValue(timexes.head), None)
@@ -185,7 +183,7 @@ class AdvancedTimexParser extends DataParser {
           throw new UnexpectedNumberOfTimexesException(i, timexes.map(n => (n \\ "@value").toString))
       }
     }
-  }
+
 
 
   /**
@@ -195,22 +193,47 @@ class AdvancedTimexParser extends DataParser {
    * @param timexNode
    * @return
    */
-  def getTimexValue(timexNode: xml.Node): Option[String] = {
-    var str = (timexNode \\ "@value").toString
-    if(str.length <= 4) {
-      logger.error("Timex with less than the year: " + str + " in : " + timexNode.toString)
-    }
-
-    if(str.substring(0,4).contains("X")) {
-      logger.error("Year component unknown: " + str + " in : " + timexNode.toString )
-      return None
-    } else {
-      return Some(str)
-    }
+  def getTimexValue(timexNode: xml.Node): Option[String] = (timexNode \\ "@value").toString match {
+    case str if str.length < 4 =>
+      logger.trace("Timex with less than the year: " + str + " in : " + timexNode.toString)
+      None
+    case str if str.substring(0,4).contains("X") =>
+      logger.trace("Year component unknown: " + str + " in : " + timexNode.toString )
+      None
+    case str =>Some(str)
   }
 
-  private def escapeStr(str: String) = {
+  /** Escapes the 5 predefined XML characters
+   *
+   * See http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+   * "  &quot;
+   * '   &apos;
+   * <   &lt;
+   * >   &gt;
+   * &   &amp;
+   *
+   * @param str
+   * @return escaped string
+   */
+  private def escapePredefinedXMLCharacters(str: String) = {
     // result will be an XML -> escape predefined XML symbols
-    str.replaceAll("&", "&amp;")
+    val sb = new StringBuilder()
+    for(i <- 0 until str.length) {
+      str.charAt(i) match {
+        case '"' => sb.append("&quot;")
+        case '\'' => sb.append("&apos;")
+        case '<' => sb.append("&lt;")
+        case '>' => sb.append("&gt;")
+        case '&' => sb.append("&amp;")
+        case c => sb.append(c)
+      }
+    }
+    sb.toString
   }
+
+  private def sizeOf(o: Object, s: String) = {
+  //  logger.error(s +  ": " + SizeOf.humanReadable(SizeOf.deepSizeOf(o)))
+  }
+
+
 }

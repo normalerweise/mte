@@ -1,4 +1,4 @@
-<configuration debug="true">
+<configuration debug="false">
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
@@ -12,6 +12,13 @@
        <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
      </encoder>
    </appender>
+
+    <appender name="MEMORY_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${application.home}/logs/application_memory.log</file>
+        <encoder>
+            <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
+        </encoder>
+    </appender>
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
@@ -27,8 +34,27 @@
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
   <logger name="org.dbpedia.extraction.dataparser.UnitValueParser" level="ERROR" />
-  <logger name="org.dbpedia.extraction.mappings.SimplePropertyMapping" level="FINE" />
+  <logger name="org.dbpedia.extraction.mappings.SimplePropertyMapping" level="ERROR" />
   <logger name="extraction.parser.AdvancedTimexParser" level="ERROR" />
+  <logger name="controllers.InfoboxExtractionController" level="INFO" />
+
+  <logger name="TemporalInfoboxExtractorActorMemory" level="ERROR">
+    <appender-ref ref="MEMORY_FILE" />
+  </logger>
+  <logger name="actors.TemporalInfoboxExtractorActor" level="ERROR"/>
+  <logger name="actors.SampleFinderActor" level="TRACE"/>
+  <logger name="actors.SampleSaverActor" level="INFO"/>
+  <logger name="ch.weisenburger.uima.FinancialDataSamplePipelineFactory" level="INFO"/>
+  <logger name="ch.weisenburger.nlp.ner.CompanyRecognizer" level="INFO"/>
+  <logger name="ch.weisenburger.nlp.ner.KBFinancialDataRelationTripleMatcher" level="INFO"/>
+
+
+  <logger name="controllers.ExtractionResultsController" level="DBEUG"/>
+  <logger name="controllers.PageController" level="DBEUG"/>
+
+
+
+
 
   <logger name="ner.LingPipeTrainingGenerator" level="INFO" />
 

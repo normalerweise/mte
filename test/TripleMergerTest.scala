@@ -1,4 +1,4 @@
-import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, ThreadUnsafeDependencies}
+import extraction.extractors.{TemporalDBPediaMappingExtractorWrapper, Dependencies}
 import extraction.formatters.QuadsMerger
 import org.joda.time.DateTime
 import models.{Page, Revision}
@@ -74,18 +74,18 @@ class TripleMergerTest extends Specification {
 
 
 
-      val page = Page(0, "test", "test")
+      val page = Page(0, "test", "test", "test", "test")
       val rev1 = Revision(1, new DateTime, page, content1)
       val rev2 = Revision(2, new DateTime, page, content2)
       val rev3 = Revision(3, new DateTime, page, content3)
       val rev4 = Revision(4, new DateTime, page, content4)
 
 
-      val dependencies =  ThreadUnsafeDependencies.create("tester")
+      val dependencies =  new Dependencies
       val extractor = new TemporalDBPediaMappingExtractorWrapper(dependencies)
 
       val result = extractor.extract(rev1) ++ extractor.extract(rev2) ++ extractor.extract(rev3) ++ extractor.extract(rev4)
-      val mergedResult = QuadsMerger.getDistinctQuads(result)
+      val mergedResult = QuadsMerger.getDistinctQuadsPerYear(result)
       //TurtleSaver.save(result)
       println(mergedResult.mkString("\n"))
     }

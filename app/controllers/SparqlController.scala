@@ -22,7 +22,7 @@ object SparqlController extends Controller {
               SELECT DISTINCT ?x
               WHERE
                 {
-                  ?x a res:AmericanFootballPlayer
+                  ?x a res:Company
                 } ORDER BY ASC(?x)
             }
             FILTER NOT EXISTS
