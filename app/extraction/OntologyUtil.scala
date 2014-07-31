@@ -7,9 +7,6 @@ import models.Quad
  */
 object OntologyUtil {
 
-  /** Specific conversion for (non-temporal) ontology predicates
-    *
-    */
   val temporalPredicates = Map(
     "http://dbpedia.org/ontology/numberOfEmployees" -> true,
     "http://dbpedia.org/ontology/revenue" -> true,

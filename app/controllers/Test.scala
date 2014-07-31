@@ -1,7 +1,7 @@
 package controllers
 
 import ch.weisenburger.deprecated_ner.SentenceSplitter
-import ch.weisenburger.uima.FinancialDataSamplePipelineFactory
+import ch.weisenburger.uima.FinancialDataPipelineFactory
 import ch.weisenburger.uima.annotator.MyStanfordPOSTaggerWrapper
 import ch.weisenburger.uima.util.UimaTypesSugar
 import de.unihd.dbs.uima.annotator.stanfordtagger.StanfordPOSTaggerWrapper
@@ -39,8 +39,8 @@ object Test extends Controller with MongoController with UimaTypesSugar {
   }
 
 
-  val testPipeline = FinancialDataSamplePipelineFactory.
-    createTestPipeline(Seq(new MyStanfordPOSTaggerWrapper))
+  val testPipeline = FinancialDataPipelineFactory.
+    createSampleExtractionTestPipeline(Seq(new MyStanfordPOSTaggerWrapper))
 
 
   def split(pageTitleInUri: String) = Action {

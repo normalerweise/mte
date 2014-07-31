@@ -47,10 +47,10 @@
   <logger name="ch.weisenburger.uima.FinancialDataSamplePipelineFactory" level="INFO"/>
   <logger name="ch.weisenburger.nlp.ner.CompanyRecognizer" level="INFO"/>
   <logger name="ch.weisenburger.nlp.ner.KBFinancialDataRelationTripleMatcher" level="INFO"/>
+  <logger name="org.dbpedia.extraction.dataparser.ParserUtils" level="ERROR"/>
 
-
-  <logger name="controllers.ExtractionResultsController" level="DBEUG"/>
-  <logger name="controllers.PageController" level="DBEUG"/>
+  <logger name="controllers.ExtractionResultsController" level="INFO"/>
+  <logger name="controllers.PageController" level="INFO"/>
 
 
 

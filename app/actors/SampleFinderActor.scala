@@ -11,7 +11,7 @@ import play.api.libs.json.Json
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.slf4j.LoggerFactory
-import ch.weisenburger.uima.FinancialDataSamplePipelineFactory
+import ch.weisenburger.uima.FinancialDataPipelineFactory
 
 case class ExtractSamplesFromRevisionTexts(extractionRunId: Option[BSONObjectID], number: Int, totalNumber: Int, pageTitleInUri: String)
 
@@ -20,7 +20,7 @@ class SampleFinderActor extends Actor {
   val log = LoggerFactory.getLogger(getClass)
 
   log.info("creating financial data sample pipeline")
-  val sampleFinderPipeline = FinancialDataSamplePipelineFactory.createScalaPipeline
+  val sampleFinderPipeline = FinancialDataPipelineFactory.createSampleExctractionScalaCaseClassPipeline
   log.info("created financial data sample pipeline")
   val sampleSaver = DefaultActors.sampleSaver
   val sampleCandidateSaver = DefaultActors.sampleCandidateSaver

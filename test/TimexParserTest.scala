@@ -18,8 +18,8 @@ class TimexParserTest extends Specification {
       val dependencies =  new Dependencies()
       val extractor = new TemporalDBPediaMappingExtractorWrapper(dependencies)
 
-      val revisions = Await.result(Revision.getPageRevs("Adani_Group"), Duration(5000, MILLISECONDS))
-      val frevs = revisions.filter(_.id == 480510778)
+      val revisions = Await.result(Revision.getPageRevs("Pirelli"), Duration(5000, MILLISECONDS))
+      val frevs = revisions.filter(_.id == 511480441)
       val page = revisions.head.page.get
 
       val quads = frevs.flatMap( rev => extractor.extract(rev))
