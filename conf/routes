@@ -1,0 +1,44 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Enable webjar based resources to be returned
+GET        /webjars/*file                    controllers.WebJarAssets.at(file)
+
+# Home page
+GET        /                                 controllers.Application.index()
+
+GET /api/v1/events                          controllers.Application.connectEventsSSE()
+
+# SPARQL Queries
+GET /api/v1/query/dbpedia/companies                 controllers.SparqlController.queryCompaniesFromDBpedia()
+GET /api/v1/companies                               controllers.SparqlController.getCompanieUrisFromFile()
+
+GET /api/v1/sample                                 controllers.SampleController.getSampleFromFile()
+GET /api/v1/sample/generate                        controllers.SampleController.generateSample(size: Int)
+
+GET /api/v1/sample/extract                         controllers.ExtractorController.extractSample()
+GET /api/v1/sample/extrdata                        controllers.ExtractorController.listExtractedData()
+
+
+GET /api/v1/sample/download                        controllers.PageController.downloadSample()
+GET /api/v1/pages/:pageTitle/download               controllers.PageController.downloadSingleWikiPage(pageTitle)
+GET /api/v1/pages/:pageTitle/revs                   controllers.PageController.getPageRevsAsJson(pageTitle)
+GET /api/v1/pages                                   controllers.PageController.listDownloadedData()
+GET /api/v1/events/latest                           controllers.EventsController.getLastNEvents(number: Int)
+
+GET /api/v1/sample/revdata                         controllers.PageController.listDownloadedData()
+
+GET /api/v1/sample/stats                            controllers.StatsController.getSampleStats()
+
+#GET /test/create/:name controllers.MongoTest.create(name)
+#GET /test/list controllers.MongoTest.list
+GET  /admin/config                       controllers.Application.config
+
+
+# Map the JS resource paths
+GET        /logs/*file                       controllers.Application.logFile(file)
+GET        /data/*file                       controllers.Application.dataFile(file)
+
+GET        /*file                            controllers.Assets.at(path="/public", file)
+

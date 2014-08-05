@@ -1,0 +1,81 @@
+<div class="page-header">
+    <h1>Display sample stats <small>todo</small></h1>
+</div>
+
+<div id="alerts">{{ alert }}</div>
+<button ng-click="getSampleStats()">Get Sample Stats</button>
+
+<br/>
+        <div ng-show="stats.aggregated">
+<p>No of companies in Sample: {{ stats.aggregated.sampleSize }}</p>
+
+<h1>Summary</h1>
+
+<table>
+    <tr>
+      <td>Figure</td>
+        <td>3 Years</td>
+        <td>5 Years</td>
+    </tr>
+    <tr>
+        <td>Revenue Years</td>
+        <td>{{ stats.aggregated.revenue3Abs }}({{ stats.aggregated.revenue3Rel }})</td>
+        <td>{{ stats.aggregated.revenue5Abs }}({{ stats.aggregated.revenue5Rel }})</td>
+    </tr>
+    <tr>
+        <td>OperatingIncomeYears</td>
+        <td>{{ stats.aggregated.operatingIncome3Abs }}({{ stats.aggregated.operatingIncome3Rel }})</td>
+        <td>{{ stats.aggregated.operatingIncome5Abs }}({{ stats.aggregated.operatingIncome5Rel }})</td>
+    </tr>
+    <tr>
+        <td>NetIncomeYears</td>
+        <td>{{ stats.aggregated.netIncome3Abs }}({{ stats.aggregated.netIncome3Rel }})</td>
+        <td>{{ stats.aggregated.netIncome5Abs }}({{ stats.aggregated.netIncome5Rel }})</td>
+    </tr>
+    <tr>
+        <td>TotalAssetsYears</td>
+        <td>{{ stats.aggregated.assets3Abs }}({{ stats.aggregated.assets3Rel }})</td>
+        <td>{{ stats.aggregated.assets5Abs }}({{ stats.aggregated.assets5Rel }})</td>
+    </tr>
+    <tr>
+        <td>TotalEquityIncreaseYears</td>
+        <td>{{ stats.aggregated.equity3Abs }}({{ stats.aggregated.equity3Rel }})</td>
+        <td>{{ stats.aggregated.equity5Abs }}({{ stats.aggregated.equity5Rel }})</td>
+    </tr>
+    <tr>
+        <td>EmployeeYears</td>
+        <td>{{ stats.aggregated.employees3Abs }}({{ stats.aggregated.employees3Rel }})</td>
+        <td>{{ stats.aggregated.employees5Abs }}({{ stats.aggregated.employees5Rel }})</td>
+    </tr>
+</table>
+
+
+
+<h1>Details</h1>
+
+<table>
+    <tr>
+        <td>Name</td>
+        <td>Revenue Years</td>
+        <td>OperatingIncomeYears</td>
+        <td>NetIncomeYears</td>
+        <td>TotalAssetsYears</td>
+        <td>TotalEquityIncreaseYears</td>
+        <td>EmployeeYears</td>
+    </tr>
+    <tr ng-repeat="pageStats in stats.perPage">
+        <td><a href="/data/triples_over_time/{{ pageStats.name }}">{{ pageStats.name }}</a></td>
+        <td>{{ pageStats.revenueYears }}</td>
+        <td>{{ pageStats.operatingIncomeYears }}</td>
+        <td>{{ pageStats.netIncomeYears }}</td>
+        <td>{{ pageStats.totalAssetsYears }}</td>
+        <td>{{ pageStats.totalEquityIncrease }}</td>
+        <td>{{ pageStats.employeeYears }}</td>
+    </tr>
+</table>
+            <h1>Runtime</h1>
+            <a href="data/runtime.json">Runtime File</a>
+        </div>
+
+
+

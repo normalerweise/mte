@@ -1,0 +1,47 @@
+/* app css stylesheet */
+
+.menu {
+  list-style: none;
+  border-bottom: 0.1em solid black;
+  margin-bottom: 2em;
+  padding: 0 0 0.5em;
+}
+
+.menu:before {
+  content: "[";
+}
+
+.menu:after {
+  content: "]";
+}
+
+.menu > li {
+  display: inline;
+}
+
+.menu > li:before {
+  content: "|";
+  padding-right: 0.3em;
+}
+
+.menu > li:nth-child(1):before {
+  content: "";
+  padding: 0;
+}
+
+.eventsStretchedToMargin {
+    display: block;
+    position:absolute;
+    height:auto;
+    bottom:0;
+    top:95px;
+    right:0;
+}
+
+#eventsWell {
+  width: 100%;
+  bottom:0;
+  top: 0;
+  right:5px;
+  overflow: scroll;
+}

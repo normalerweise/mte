@@ -1,0 +1,26 @@
+<div class="page-header">
+    <h1>Download Article/Revisions of Sample Companies
+        <small>todo</small>
+    </h1>
+</div>
+<div style="position:relative;">
+    <div dw-loading="downloadedData" dw-loading-options="{active: true, text: false}">
+
+        <p>
+            <button class="btn btn-primary" ng-click="downloadSample()">Download Sample</button>
+            <button class="btn btn-default" ng-click="listDownloadedData()">Refresh List</button>
+        </p>
+        <br/><br/>
+
+        <div>
+            <p>No of companies: {{ data.length }}</p>
+            <li ng-repeat="downloadedPage in data">
+                <ul>
+                    <a target="_blank" href="/api/v1/pages/{{downloadedPage._id}}/revs">{{downloadedPage._id}}
+                        ({{downloadedPage.numberOfRevisions}})</a>
+                </ul>
+            </li>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,39 @@
+<div class="page-header">
+    <h1>Company Random Sample
+        <small>todo</small>
+    </h1>
+</div>
+<div style="position:relative;">
+    <div dw-loading="sample" dw-loading-options="{active: true, text: false}">
+        <form class="form-inline" role="form" ng-submit="generateSample()">
+            <div class="form-group">
+                <label class="sr-only" for="inputSampleSize">Email address</label>
+
+                <div class="input-group" style="width:150px">
+                    <input type="number" class="form-control" id="inputSampleSize" ng-model="sample.size">
+                    <span class="input-group-addon">Size</span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Random Sample</button>
+        </form>
+        <br/><br/>
+        <p>No of companies in Sample: {{ sample.elements.length }}</p>
+        <br/>
+        <div>
+            <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                Previous
+            </button>
+            {{currentPage+1}}/{{numberOfPages()}}
+            <button ng-disabled="currentPage >= companyResourceUris.length/pageSize - 1"
+                    ng-click="currentPage=currentPage+1">
+                Next
+            </button>
+        </div>
+        <br/>
+        <li ng-repeat="company in sample.elements | startFrom:currentPage*pageSize | limitTo:pageSize">
+            <ul>
+                <a href="{{company}}">{{company}}</a>
+            </ul>
+        </li>
+    </div>
+</div>

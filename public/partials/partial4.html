@@ -1,0 +1,15 @@
+<div class="page-header">
+    <h1>Extract Article/Revisions of Sample Companies <small>todo</small></h1>
+</div>
+
+<div id="alerts">{{ alert }}</div>
+<button ng-click="extractSample()">Extract Sample</button>
+<button ng-click="listExtractedData()">List Extracted Data</button>
+<br/>
+<p>No of companies in Sample: {{ sample.length }}</p>
+<li ng-repeat="companyQuads in sample">
+    <ul>
+        <a href="/data/triples_over_time/{{companyQuads}}">{{companyQuads}}</a>
+    </ul>
+</li>
+
