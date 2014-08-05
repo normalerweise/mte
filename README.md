@@ -1,15 +1,10 @@
-<<<<<<< HEAD
-mte
-===
+Master Thesis Extractor (MTE)
+=============================
 
-Master Thesis Extractor
-=======
-angular-seed-play
-=================
+Work in progress!!
 
-This project illustrates how [WebJars](http://www.webjars.org/) can be used along with
-[requirejs](http://requirejs.org/) in relation to the popular
-[angular-seed](https://github.com/angular/angular-seed) project.
+The Master Thesis Extractor is a temporal information extraction system,
+which outputs RDF from Wikipedia Infoboxes.
 
-The project is available as a [Typesafe Activator Template](http://typesafe.com/activator/template/angular-seed-play).
->>>>>>> initial commit
+It reuses the [DBPedia Extraction Framework](https://github.com/dbpedia/extraction-framework) [Mapping Extractor](http://wiki.dbpedia.org/DeveloperDocumentation/Extractor?v=vqu#h110-5)
+to extract values and reuses [Heidel Time](https://code.google.com/p/heideltime/) to extract temporal expressions.
