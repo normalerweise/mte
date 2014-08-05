@@ -3,7 +3,7 @@ package actors
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import akka.actor.{ActorSystem, ActorRef, Props}
-import akka.routing.{DefaultResizer, RoundRobinRouter}
+import akka.routing.RoundRobinRouter
 import akka.util.Timeout
 import akka.pattern.ask
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

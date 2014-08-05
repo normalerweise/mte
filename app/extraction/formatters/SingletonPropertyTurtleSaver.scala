@@ -1,5 +1,7 @@
 package extraction.formatters
 
+import java.net.URLEncoder
+
 import org.dbpedia.extraction.destinations.formatters.TerseFormatter
 import org.dbpedia.extraction.destinations.{Quad, WriterDestination}
 import java.io.FileWriter
@@ -23,7 +25,7 @@ class SingletonPropertyTurtleSaver(val path: String)  {
       val (predicateUri, datatype, value) = s match {
         case "fromDate" => ("http://weisenburger.ch/fromDate", "xsd:String", s2)
         case "toDate" => ("http://weisenburger.ch/toDate", "xsd:String", s2)
-        case "sourceRevision" => ("http://www.w3.org/ns/prov#wasDerivedFrom", null, s"http://en.wikipedia.org/wiki/$wikipediaArticleName?oldid=$s2")
+        case "sourceRevision" => ("http://www.w3.org/ns/prov#wasDerivedFrom", null, s"http://en.wikipedia.org/wiki/${URLEncoder.encode(wikipediaArticleName,"UTF-8")}?oldid=$s2")
       }
       new Quad(getLanguage(q), "", singletonProperty, predicateUri, value, "", datatype)
     }

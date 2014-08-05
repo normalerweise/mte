@@ -151,7 +151,7 @@ object ExtractionResultsController extends Controller {
   private val mergeValue: (ExtractionRunPageResult)=>Seq[Quad] = (res) => {
     // TODO: For now year precision is sufficient
     val quadsWithYearPrecision = res.quads.map(convertToYearPrecision)
-    QuadsMerger.getDistinctQuadsPerValue(quadsWithYearPrecision)
+    QuadsMerger.getDistinctQuadsPerValueAndTimex(quadsWithYearPrecision)
   }
 
 //  private val enRes = "^http:\\/\\/en.dbpedia.org\\/resource\\/(.*)$".r

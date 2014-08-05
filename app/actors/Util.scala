@@ -1,6 +1,6 @@
 package actors
 
-import java.net.URLDecoder
+import java.net.{URLEncoder, URLDecoder}
 
 /**
  * Created by Norman on 03.04.14.
@@ -16,6 +16,10 @@ object Util {
   
   def decodeResourceName(dbPediaResourceName: String) = {
     URLDecoder.decode(dbPediaResourceName.replace("+", "%2B"), "UTF-8").replace("%2B", "+")
+  }
+
+  def encodeWikiArticleName(wikiArticleName: String) = {
+    URLEncoder.encode(wikiArticleName, "UTF-8")
   }
 
 }

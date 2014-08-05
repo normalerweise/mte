@@ -63,8 +63,9 @@ object QuadsMerger {
   }
 
   // assumes quadsOfWikiPage have the same subject
-  def getDistinctQuadsPerValue(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
-    val groupedQuads = quadsOfWikiPage.groupBy(q => q.predicate + q.obj + q.context.get("fromDate").getOrElse(""))
+  def getDistinctQuadsPerValueAndTimex(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
+    val groupedQuads = quadsOfWikiPage.groupBy(q =>
+      q.predicate + q.obj + q.context.get("fromDate").getOrElse("") + q.context.get("toDate").getOrElse(""))
     // select the first one
     val result = groupedQuads.map { case (_,quads) =>
       quads.head

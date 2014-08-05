@@ -29,6 +29,7 @@ class TimexParserTest extends Specification {
 
 
       //TurtleSaver.initDestination("data/test.tt", quads)
+      println(quads.mkString("\n"))
       println("done")
     }
 
