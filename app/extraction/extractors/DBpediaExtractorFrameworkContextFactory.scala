@@ -18,13 +18,13 @@ object DBpediaExtractorFrameworkContextFactory {
   type Context =  scala.AnyRef {
     def ontology: Ontology
     def language: Language
-    def mappingPageSource: Traversable[PageNode]
+    def mappingPageSource: Traversable[org.dbpedia.extraction.sources.WikiPage]
     def mappings : Mappings
     def redirects : Redirects
     def timexParser: AdvancedTimexParser
   }
 
-  private val mappingPageSources = scala.collection.mutable.Map.empty[Language, Traversable[PageNode]]
+  private val mappingPageSources = scala.collection.mutable.Map.empty[Language, Traversable[org.dbpedia.extraction.sources.WikiPage]]
   private val redirects = scala.collection.mutable.Map.empty[Language, Redirects]
 
   // Ontology is language independent and can be reused
@@ -40,11 +40,17 @@ object DBpediaExtractorFrameworkContextFactory {
     val _timexParser = timexParser
 
     new {
+
+      private lazy val _mappings =
+      {
+        MappingsLoader.load(this)
+      }
+
       def ontology: Ontology = _ontology
       def language: Language = _lang
       def redirects: Redirects = _redirects
-      def mappingPageSource: Traversable[PageNode] = _mappingPageSource
-      def mappings: Mappings = MappingsLoader.load(this)
+      def mappingPageSource: Traversable[org.dbpedia.extraction.sources.WikiPage] = _mappingPageSource
+      def mappings: Mappings = _mappings
       def timexParser: AdvancedTimexParser = _timexParser
     }
   }
@@ -63,15 +69,14 @@ object DBpediaExtractorFrameworkContextFactory {
   }
 
   private def createMappingPageSource(lang: Language)  = {
-    val parse = WikiParser.getInstance()
     val namespace = Namespace.mappings(lang)
     val mappingsFile = new File("resources/mappings", namespace.name(Language.Mappings).replace(' ', '_') + ".xml")
-    val mappingSource = XMLSource.fromFile(mappingsFile, Language.Mappings).map(parse)
+    val mappingSource = XMLSource.fromFile(mappingsFile, Language.Mappings)
 
     mappingSource
   }
 
-  private def getMappingPageSource(lang: Language): Traversable[PageNode] = synchronized {
+  private def getMappingPageSource(lang: Language): Traversable[org.dbpedia.extraction.sources.WikiPage] = synchronized {
     mappingPageSources.getOrElse(lang, {
       val ps = createMappingPageSource(lang)
       mappingPageSources(lang) = ps

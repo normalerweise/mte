@@ -8,6 +8,7 @@ import models.{Quad, Revision}
 import org.dbpedia.extraction.util.Language
 import org.dbpedia.extraction.sources.WikiPage
 import extraction.parser.AdvancedTimexParser
+import org.slf4j.LoggerFactory
 
 
 case class NoContentException(message: String) extends Exception(message)
@@ -28,6 +29,7 @@ class Dependencies() {
 
 class TemporalDBPediaMappingExtractorWrapper(dependencies: Dependencies) {
 
+  val log = LoggerFactory.getLogger(getClass)
   val englishTemporalMappingExtractor = new MappingExtractor(dependencies.context)
 
   def extract(rev: Revision): Seq[Quad] = {
@@ -52,9 +54,16 @@ class TemporalDBPediaMappingExtractorWrapper(dependencies: Dependencies) {
   private def extractWithTemporalMappingExtractor(rev: Revision): Seq[org.dbpedia.extraction.destinations.Quad] = {
     assert(rev.wikiLanguage == Language.English)
     val page = buildWikiPage(rev.wikiTitle, rev.wikiLanguage, rev.content.get)
-    val parsedPage = parseWikiPage(page)
 
-    englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
+    parseWikiPage(page) match {
+      case Some(parsedPage) =>
+        englishTemporalMappingExtractor.extract(parsedPage, rev.subjectURI, pageContext)
+      case None =>
+        log.error(s"unable to parse wiki markup of revision ${rev.id} of page ${rev.page.get.dbpediaResourceName} ")
+        Seq.empty
+    }
+
+
   }
 
   private def convertDBPediaExtractorQuadsToCustomQuad(rev: Revision, quad: org.dbpedia.extraction.destinations.Quad) = {
