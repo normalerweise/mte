@@ -90,6 +90,16 @@ class NumberStringNormalizerSpec extends Specification {
       implicit val text = "haha 5,0000 irgendwas"
       processAndCheck("haha 5.0000 irgendwas", "5,0000")
     }
+
+    "be ..." in {
+      implicit val text = "5,000.000 thousand"
+      processAndCheck("5000000", "5,000.000 thousand")
+    }
+
+    "be ..." in {
+      implicit val text = "5,000,000"
+      processAndCheck("5000000", "5,000,000")
+    }
   }
 
 
