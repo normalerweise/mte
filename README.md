@@ -14,8 +14,8 @@ to extract values and reuses [Heidel Time](https://code.google.com/p/heideltime/
 ## Datasets
 
 Currently the main focus of MTE is to extract a time-based dataset about 'companies'.
-The dataset can be downloaded from:
-TODO: Provide links
+The latest release of the dataset can be downloaded from:
+[tiny.cc/tmpcompany](tiny.cc/tmpcompany)
 
 ## Run 
 
@@ -24,11 +24,13 @@ In order to run an extraction on your own either download a binary release or bu
 MTE uses a [MongoDB](http://www.mongodb.org/) to cache wiki articles and revisions. By default MTE connects to the Mongo DB listening on 127.0.0.1:27017. Set the environment variable MTE_MONGODB to a valid [connection string](http://docs.mongodb.org/manual/reference/connection-string/) in order to overwrite the default value.
 
 Run the app using a binary release:
-1. unzip the binary release file
-2. execute 'bin/mte', respectively 'bin/mte.bat'
+
+1. Unzip the binary release file
+1. Execute 'bin/mte', respectively 'bin/mte.bat'
 
 Run your own build:
-1. execute 'sbt start' from the MTE project directory
+1. Follow the instructions to compile your own build 
+1. Execute 'sbt start' from the MTE project directory
 
 For further details see the [play documentation](http://www.playframework.com/documentation/2.2.x/Production).
 
