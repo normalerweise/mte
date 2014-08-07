@@ -15,7 +15,7 @@ to extract values and reuses [Heidel Time](https://code.google.com/p/heideltime/
 
 Currently the main focus of MTE is to extract a time-based dataset about 'companies'.
 The latest release of the dataset can be downloaded from:
-[tiny.cc/tmpcompany](tiny.cc/tmpcompany)
+[http://tiny.cc/tmpcompany](http://tiny.cc/tmpcompany)
 
 ## Run 
 
