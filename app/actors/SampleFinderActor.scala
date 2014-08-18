@@ -62,7 +62,7 @@ class SampleFinderActor extends Actor {
 
 
       if(log.isTraceEnabled) {
-        log.trace(s"$wikiArticleName: $wikiRevId:\n" +poNegSamplesAndSampleCandidates._1.size)
+        log.trace(s"$wikiArticleName: $wikiRevId:" +poNegSamplesAndSampleCandidates._1.size)
       }
       poNegSamplesAndSampleCandidates
     }

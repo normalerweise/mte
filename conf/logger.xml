@@ -42,7 +42,7 @@
     <appender-ref ref="MEMORY_FILE" />
   </logger>
   <logger name="actors.TemporalInfoboxExtractorActor" level="ERROR"/>
-  <logger name="actors.SampleFinderActor" level="TRACE"/>
+  <logger name="actors.SampleFinderActor" level="INFO"/>
   <logger name="actors.SampleSaverActor" level="INFO"/>
   <logger name="ch.weisenburger.uima.FinancialDataSamplePipelineFactory" level="INFO"/>
   <logger name="ch.weisenburger.nlp.ner.CompanyRecognizer" level="INFO"/>

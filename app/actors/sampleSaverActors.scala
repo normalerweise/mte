@@ -1,6 +1,6 @@
 package actors
 
-import java.io.{BufferedWriter, FileWriter, Writer}
+import java.io.{File, BufferedWriter, FileWriter, Writer}
 
 import akka.actor.{Actor, ActorRef, Status}
 import ch.weisenburger.uima.types.distantsupervision.skala._
@@ -49,6 +49,8 @@ class SampleSaverActor extends Actor {
 
   private def openExtractionRunId(extractionRunId: String) = {
     this.extractionRunId = extractionRunId
+
+    ch.weisenburger.deprecated_ner.FileUtil.deleteFolder(new File(s"data/samples/$extractionRunId/"))
 
     val negSamplesCRFTrainFile = FileUtil.ensureExists(s"data/samples/$extractionRunId/negative_samples/negative_samples.tsv")
     negSamplesCRFTrainFileWriter = new BufferedWriter(new FileWriter(negSamplesCRFTrainFile))
