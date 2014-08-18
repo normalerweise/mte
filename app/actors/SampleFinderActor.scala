@@ -28,8 +28,9 @@ class SampleFinderActor extends Actor {
   def receive = {
     case ExtractSamplesFromRevisionTexts(extractionRunId, number, totalNumber, pageTitleInUri) => try {
       implicit val _exid = extractionRunId
-      val (samples, sampleCandidates) = extractDistinctSamples(pageTitleInUri)
+      val (samples, negativeSamples, sampleCandidates) = extractDistinctSamples(pageTitleInUri)
       sampleSaver ! SaveSamplesOfArticle(samples, sender)
+      sampleSaver ! SaveNegativeSamplesOfArticle(negativeSamples, sender)
       sampleCandidateSaver ! SaveSampleCandidatesOfArticle(sampleCandidates, sender)
 
 
@@ -43,11 +44,11 @@ class SampleFinderActor extends Actor {
     }
   }
 
-  private def extractDistinctSamples(pageTitleInUri: String): (Seq[Sample],Seq[SampleCandidate]) = {
+  private def extractDistinctSamples(pageTitleInUri: String): (Seq[Sample], Seq[NegativeSample], Seq[SampleCandidate]) = {
     log.info("processing " + pageTitleInUri)
     val revisions = Await.result(TextRevision.getPageRevs(pageTitleInUri), 10 seconds)
 
-    val (samples, sampleCandidates) = revisions.map { rev =>
+    val (samples, negativeSamples, sampleCandidates) = revisions.map { rev =>
       val wikiText = rev.content.get
       val dbpediaResourceName = rev.page.get.dbpediaResourceName
       val dbpediaResourceURI =  s"http://dbpedia.org/resource/${dbpediaResourceName}"
@@ -56,17 +57,17 @@ class SampleFinderActor extends Actor {
 
       log.trace("processing " + dbpediaResourceName + " " + wikiRevId)
 
-      val samplesAndSampleCandidates = sampleFinderPipeline
+      val poNegSamplesAndSampleCandidates = sampleFinderPipeline
         .process(wikiText, dbpediaResourceURI, wikiRevId, wikiArticleName)
 
 
       if(log.isTraceEnabled) {
-        log.trace(s"$wikiArticleName: $wikiRevId:\n" +samplesAndSampleCandidates._1.mkString("\n"))
+        log.trace(s"$wikiArticleName: $wikiRevId:\n" +poNegSamplesAndSampleCandidates._1.size)
       }
-      samplesAndSampleCandidates
+      poNegSamplesAndSampleCandidates
     }
-    .foldLeft((List.empty[Sample], List.empty[SampleCandidate])) { case (aggregate, sAndC) =>
-      (aggregate._1 ++ sAndC._1, aggregate._2 ++ sAndC._2)
+    .foldLeft((List.empty[Sample], List.empty[NegativeSample], List.empty[SampleCandidate])) { case (aggregate, sAndC) =>
+      (aggregate._1 ++ sAndC._1, aggregate._2 ++ sAndC._2, aggregate._3 ++ sAndC._3)
     }
 
     val distinctSamples = samples.groupBy(s => s.sentenceText.replaceAll("\\s","") + s.quad).map { case (_, equalSamples) =>
@@ -90,7 +91,7 @@ class SampleFinderActor extends Actor {
     }
 
     log.trace ("processed " + pageTitleInUri)
-    (distinctSamples.toSeq, distinctSampleCandidates.toSeq)
+    (distinctSamples.toSeq, negativeSamples, distinctSampleCandidates.toSeq)
   }
 
 }
