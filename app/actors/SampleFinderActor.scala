@@ -46,7 +46,7 @@ class SampleFinderActor extends Actor {
 
   private def extractDistinctSamples(pageTitleInUri: String): (Seq[Sample], Seq[NegativeSample], Seq[SampleCandidate]) = {
     log.info("processing " + pageTitleInUri)
-    val revisions = Await.result(TextRevision.getPageRevs(pageTitleInUri), 10 seconds)
+    val revisions = Await.result(TextRevision.getPageRevs(pageTitleInUri), 30 seconds)
 
     val (samples, negativeSamples, sampleCandidates) = revisions.map { rev =>
       val wikiText = rev.content.get

@@ -48,8 +48,15 @@ object DefaultActors {
     supervisor ? CreateActor(Props[SampleFinderActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"sampleFinder")
       map { case a: ActorRef => a}, 1 second)
 
+  lazy val factExtractor = Await.result(
+    supervisor ? CreateActor(Props[FreeTextFactExtractionActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"sampleExtractor")
+      map { case a: ActorRef => a}, 1 second)
+
   lazy val sampleSaver = Await.result(
     supervisor ? CreateActor(Props[SampleSaverActor],"sampleSaver") map { case a: ActorRef => a}, 1 second)
+
+  lazy val factSaver = Await.result(
+    supervisor ? CreateActor(Props[FactSaverActor],"factSaver") map { case a: ActorRef => a}, 1 second)
 
   lazy val sampleCandidateSaver = Await.result(
     supervisor ? CreateActor(Props[SampleCandidateSaverActor],"sampleCandidteSaver") map { case a: ActorRef => a}, 1 second)

@@ -185,8 +185,8 @@ class SampleCandidateSaverActor extends Actor {
 
   private def openExtractionRunId(extractionRunId: String) = {
 
-    val sampleCandidatessFile = FileUtil.ensureExists(s"data/samples/$extractionRunId/sample_candidates.txt")
-    sampleCandidatesFileWriter = new BufferedWriter(new FileWriter(sampleCandidatessFile))
+    val sampleCandidatesFile = FileUtil.ensureExists(s"data/samples/$extractionRunId/sample_candidates.txt")
+    sampleCandidatesFileWriter = new BufferedWriter(new FileWriter(sampleCandidatesFile))
     log.info(s"opened files for runId $extractionRunId")
   }
 
