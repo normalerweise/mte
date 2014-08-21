@@ -97,7 +97,7 @@ object PageController extends Controller {
   }
 
   def extractSamplesFromWikiText(extractionRunId: String) = Action {
-    implicit val _exid = Some(new BSONObjectID(extractionRunId))
+    implicit val _exid = Some(BSONObjectID(extractionRunId))
     import actors.DefaultActors._
     implicit val timeout = new Timeout(1 hour)
     log.info("start sample Extraction request")

@@ -279,6 +279,13 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
     });
   };
 
+  $scope.extractSampleFreeText = function(){
+      var id = $scope.extractionRunId();
+      $http.get('/api/v1/extractionruns/' + id + '/wikitext-extraction').success(function(returnStatement){
+        $scope.alert = "Started fact extraction from wiki texts";
+      });
+    };
+
   $scope.listExtractedData = function(){
      var id = $scope.extractionRunId();
      $http.get('/api/v1/extractionruns/' + id + '/list-results').success(function(newSample){

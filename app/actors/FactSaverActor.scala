@@ -51,6 +51,10 @@ class FactSaverActor extends Actor {
     fact <- facts
     sentenceText = fact.sentenceText
     relation = fact.quad.relation
+    sRelation = fact.sRelation
+    srBegin = sRelation.begin
+    srEnd = sRelation.end
+    rValue = sentenceText.substring(srBegin, srEnd)
   } {
 
     factFileWriter.append(
@@ -58,7 +62,7 @@ class FactSaverActor extends Actor {
           |${fact.articleName}: ${fact.revisionNumber}
           |Sentence:
           | ${sentenceText.replace("\n", " ")}
-          |  P:$relation
+          |  P:$relation ($rValue, $srBegin, $srEnd)
         """.stripMargin)
 
     factFileWriter.flush

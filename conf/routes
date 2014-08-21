@@ -27,6 +27,8 @@ GET  /api/v1/extractionruns/:id/get-samples         controllers.PageController.g
 
 GET  /api/v1/extractionruns/:id/page-data           controllers.PageController.listDownloadedDataOfExtractionRun(id)
 GET  /api/v1/extractionruns/:id/infobox-extraction  controllers.InfoboxExtractionController.extractExtractionRunResources(id)
+GET  /api/v1/extractionruns/:id/wikitext-extraction  controllers.FreeTextExtractionController.extractFactsFromWikiText(id)
+
 GET  /api/v1/extractionruns/:id/extraction-results  controllers.ExtractionResultsController.getExtractionRunResults(id)
 GET  /api/v1/extractionruns/:id/list-results        controllers.ExtractionResultsController.listExtractionRunResults(id)
 GET  /api/v1/extractionruns/:id/stats               controllers.ExtractionResultsController.getExtractionRunStats(id)

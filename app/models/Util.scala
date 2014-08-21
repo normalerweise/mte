@@ -28,7 +28,7 @@ object BSONObjectIdJsonConverter {
 
   implicit val bsonObjectIdRead = new Reads[BSONObjectID] {
     override def reads(js: JsValue): JsResult[BSONObjectID] = js.asOpt[String] match {
-      case Some(str) => JsSuccess(new BSONObjectID(str))
+      case Some(str) => JsSuccess(BSONObjectID(str))
       case None => JsError("unable to read DateTime")
     }
   }

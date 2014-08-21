@@ -27,13 +27,13 @@ class FreeTextFactExtractionActor extends Actor {
     log.info("creating financial data fact extraction pipeline")
     val factExtractionPipeline = FinancialDataPipelineFactory.createFactExctractionScalaCaseClassPipeline
     log.info("created financial data fact extraction pipeline")
-    val factSaver = DefaultActors.sampleSaver
+    val factSaver = DefaultActors.factSaver
 
 
     def receive = {
       case ExtractFactsFromRevisionTexts(extractionRunId, number, totalNumber, pageTitleInUri) => try {
             implicit val _exid = extractionRunId
-            val facts = extractFacts(pageTitleInUri)
+            val facts = extractDistinctFacts(pageTitleInUri)
             factSaver ! SaveExtractedFactsOfArticle(facts, sender)
 
             EventLogger raise Event(extractedFactsFromPageRevisions,
@@ -46,7 +46,7 @@ class FreeTextFactExtractionActor extends Actor {
           }
         }
 
-    private def extractFacts(pageTitleInUri: String): Seq[ExtractedFact] = {
+    private def extractDistinctFacts(pageTitleInUri: String): Seq[ExtractedFact] = {
       log.info("processing " + pageTitleInUri)
       val revisions = Await.result(TextRevision.getPageRevs(pageTitleInUri), 30 seconds)
 
@@ -68,6 +68,11 @@ class FreeTextFactExtractionActor extends Actor {
 
         extractedFacts
       }
+      //TODO: aggregate revisions
+      .groupBy(f => f.sentenceText + f.quad.relation)
+      .map { case (_, facts) => facts.head }
+      .toSeq
+
       log.trace ("processed " + pageTitleInUri)
       allFacts
     }
