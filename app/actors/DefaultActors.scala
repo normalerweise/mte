@@ -3,7 +3,7 @@ package actors
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import akka.actor.{ActorSystem, ActorRef, Props}
-import akka.routing.RoundRobinRouter
+import akka.routing.BalancingPool
 import akka.util.Timeout
 import akka.pattern.ask
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -30,26 +30,25 @@ object DefaultActors {
 
 
   lazy val pageDownloader = Await.result(
-    supervisor ? CreateActor(Props[ArticleDownloaderActor].withRouter(RoundRobinRouter(nrOfInstances = 3)),"wikipediaDownloader")
+    supervisor ? CreateActor(BalancingPool(3).props(Props[ArticleDownloaderActor]),"wikipediaDownloader")
       map { case a: ActorRef => a}, 1 second)
 
 
   lazy val wikiMarkupToTextConverter = Await.result(
-    supervisor ? CreateActor(Props[WikiMarkupToTextConverterActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"wikiMarkupToTextConverter")
+    supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[WikiMarkupToTextConverterActor]),"wikiMarkupToTextConverter")
       map { case a: ActorRef => a}, 1 second)
 
 
   lazy val infoboxExtractor = Await.result(
-    supervisor ? CreateActor(Props[TemporalInfoboxExtractorActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"infoboxExtractor")
+    supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[TemporalInfoboxExtractorActor]),"infoboxExtractor")
       map{ case a: ActorRef => a}, 20 seconds)
 
-
   lazy val sampleFinder = Await.result(
-    supervisor ? CreateActor(Props[SampleFinderActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"sampleFinder")
+    supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[SampleFinderActor]),"sampleFinder")
       map { case a: ActorRef => a}, 1 second)
 
   lazy val factExtractor = Await.result(
-    supervisor ? CreateActor(Props[FreeTextFactExtractionActor].withRouter(RoundRobinRouter(nrOfInstances = numberOfExtractorWorkers)),"sampleExtractor")
+    supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[FreeTextFactExtractionActor]),"freetextExtractor")
       map { case a: ActorRef => a}, 1 second)
 
   lazy val sampleSaver = Await.result(
