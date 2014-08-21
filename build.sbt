@@ -1,13 +1,9 @@
-//import sbtdocker.{Dockerfile, Plugin}
-//import Plugin._
-//import Plugin.DockerKeys._
-import sbt._
-import Keys._
-
 
 name := """mte"""
 
 version := "1.0-SNAPSHOT"
+
+lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.10.4"
 
@@ -18,6 +14,8 @@ incOptions := incOptions.value.withNameHashing(true)
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
+resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+
 libraryDependencies ++= Seq(
   // crosscutting concerns: logging, config, runtime...
   "org.slf4j" % "slf4j-api" % "1.7.7",
@@ -25,14 +23,14 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "log4j-over-slf4j" % "1.7.7", // redirect the apache http lib logging to slf4j
   "ch.qos.logback" % "logback-classic" % "1.1.2",
   "com.kenshoo" %% "metrics-play" % "0.1.3",
-  "nl.grons" %% "metrics-scala" % "3.2.0_a2.2",
+  "nl.grons" %% "metrics-scala" % "3.2.1_a2.3",
   // WEB
-  "org.webjars" %% "webjars-play" % "2.2.1-2",
-  "org.webjars" % "angularjs" % "1.2.14",
-  "org.webjars" % "angular-ui-router" % "0.2.8-2",
-  "org.webjars" % "angular-ui-bootstrap" % "0.10.0-1",
-  "org.webjars" % "angular-moment" % "0.6.2",
-  "org.webjars" % "momentjs" % "2.5.1-1",
+  "org.webjars" %% "webjars-play" % "2.3.0",
+  "org.webjars" % "angularjs" % "1.2.22",
+  "org.webjars" % "angular-ui-router" % "0.2.10-1",
+  "org.webjars" % "angular-ui-bootstrap" % "0.11.0-2",
+  "org.webjars" % "angular-moment" % "0.6.2-2",
+  "org.webjars" % "momentjs" % "2.8.1-1",
   // nlp
   "org.dbpedia.extraction" % "core" % "4.0-SNAPSHOT"
     exclude("log4j", "log4j"),
@@ -50,13 +48,12 @@ libraryDependencies ++= Seq(
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("commons-logging", "commons-logging"),
   // DATA
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.2"
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.akka23-SNAPSHOT"
   //  exclude("org.apache.logging.log4j", "log4j-to-slf4j")
   //  exclude("org.apache.logging.log4j", "log4j-core")
   //  exclude("org.apache.logging.log4j", "log4j-api")
 )
 
-play.Project.playScalaSettings
 
 //
 //dockerSettings
