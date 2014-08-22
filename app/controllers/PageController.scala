@@ -123,7 +123,7 @@ object PageController extends Controller {
       val closeFiles = Future.sequence(Seq(
         sampleSaver ? CloseExtractionRun(extractionRunId),
         sampleCandidateSaver ? CloseExtractionRun(extractionRunId)))
-      Await.result(closeFiles, 5 seconds)
+      Await.result(closeFiles, 10 seconds)
 
       log.info("finished sample Extraction")
       EventLogger raise Event(finishedSampeExtraction)

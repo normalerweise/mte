@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.10.4"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "UTF8")
 
 // enable improved (experimental) incremental compilation algorithm called "name hashing"
 incOptions := incOptions.value.withNameHashing(true)

@@ -30,21 +30,12 @@ class SampleSaverActor extends Actor {
       closeExtractionRunId(extractionRunId)
       sender ! Status.Success("closed")
 
-    case SaveSamplesOfArticle(samples, sender) => try {
+    case SaveSamplesOfArticle(samples) =>
       log.info(s"received ${samples.size}")
       saveSamples(samples)
-      sender ! Status.Success("saved")
-    } catch {
-      case e: Exception => sender ! Status.Failure(e); throw e
-    }
-    case SaveNegativeSamplesOfArticle(negativeSamples, sender) => try {
+    case SaveNegativeSamplesOfArticle(negativeSamples) =>
       log.info(s"received ${negativeSamples.size} negative samples")
       saveNegativeSamples(negativeSamples)
-      sender ! Status.Success("saved")
-
-    } catch {
-      case e: Exception => sender ! Status.Failure(e); throw e
-    }
   }
 
   private def openExtractionRunId(extractionRunId: String) = {
@@ -174,13 +165,9 @@ class SampleCandidateSaverActor extends Actor {
     case CloseExtractionRun(extractionRunId) =>
       closeExtractionRunId(extractionRunId)
       sender ! Status.Success
-    case SaveSampleCandidatesOfArticle(sampleCandidates, sender) => try {
+    case SaveSampleCandidatesOfArticle(sampleCandidates) =>
       log.info(s"received ${sampleCandidates.size}")
       saveSampleCandidates(sampleCandidates)
-      sender ! Status.Success
-    } catch {
-      case e: Exception => sender ! Status.Failure(e); throw e
-    }
   }
 
   private def openExtractionRunId(extractionRunId: String) = {
@@ -262,9 +249,9 @@ case class OpenExtractionRun(extractionRunId: String)
 
 case class CloseExtractionRun(extractionRunId: String)
 
-case class SaveSamplesOfArticle(samples: Seq[Sample], sender: ActorRef)
+case class SaveSamplesOfArticle(samples: Seq[Sample])
 
-case class SaveNegativeSamplesOfArticle(negativeSamples: Seq[NegativeSample], sender: ActorRef)
+case class SaveNegativeSamplesOfArticle(negativeSamples: Seq[NegativeSample])
 
-case class SaveSampleCandidatesOfArticle(sampleCandidates: Seq[SampleCandidate], sender: ActorRef)
+case class SaveSampleCandidatesOfArticle(sampleCandidates: Seq[SampleCandidate])
 

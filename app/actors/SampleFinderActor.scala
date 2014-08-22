@@ -3,7 +3,7 @@ package actors
 import ch.weisenburger.uima.types.distantsupervision.skala
 import ch.weisenburger.uima.types.distantsupervision.skala._
 import reactivemongo.bson.BSONObjectID
-import akka.actor.Actor
+import akka.actor.{Status, Actor}
 import actors.events.EventLogger
 import models.{TextRevision, Event}
 import models.EventTypes._
@@ -29,15 +29,15 @@ class SampleFinderActor extends Actor {
     case ExtractSamplesFromRevisionTexts(extractionRunId, number, totalNumber, pageTitleInUri) => try {
       implicit val _exid = extractionRunId
       val (samples, negativeSamples, sampleCandidates) = extractDistinctSamples(pageTitleInUri)
-      sampleSaver ! SaveSamplesOfArticle(samples, sender)
-      sampleSaver ! SaveNegativeSamplesOfArticle(negativeSamples, sender)
-      sampleCandidateSaver ! SaveSampleCandidatesOfArticle(sampleCandidates, sender)
-
+      sampleSaver ! SaveSamplesOfArticle(samples)
+      sampleSaver ! SaveNegativeSamplesOfArticle(negativeSamples)
+      sampleCandidateSaver ! SaveSampleCandidatesOfArticle(sampleCandidates)
 
       EventLogger raise Event(extractedSamplesFromPageRevisions,
         s"($number/$totalNumber) Extracted ${samples.size} samples from revs of $pageTitleInUri (Actor: ${self.path.name})",
         Json.obj("uriTitle" -> pageTitleInUri, "noOfSamples" -> samples.size, "noOfSampleCandidates" -> sampleCandidates.size))
 
+      sender ! Status.Success
     } catch {
       case ex: WikiPageNotInCacheException =>
         EventLogger raise Event(wikipageDoesNoExist, s"($number/$totalNumber) Wikipage revisions not in cache: " + pageTitleInUri)
