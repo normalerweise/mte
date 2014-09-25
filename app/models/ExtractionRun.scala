@@ -68,8 +68,8 @@ object ExtractionRun extends MongoModel {
     collection.find(Json.obj("_id" -> id))
       .cursor[JsValue].headOption
 
-
-  def listAsJson = collection.find(Json.obj())
+  val projection = Json.obj("resources" -> 0)
+  def listAsJsonWoSamples = collection.find(Json.obj(), projection)
     .sort(Json.obj("createdOn" -> -1)).cursor[JsValue].collect[List]()
 
   def delete(extractionRunId: String) = {

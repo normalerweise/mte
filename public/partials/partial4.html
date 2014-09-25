@@ -2,12 +2,17 @@
     <h1>Extract Article/Revisions of Sample Companies <small>todo</small></h1>
 </div> -->
 <p>
-  <button class="btn btn-primary" ng-click="extractSample()">Extract Sample</button>
-  <button class="btn btn-primary" ng-click="extractSampleFreeText()">Extract Sample from Wiki Text</button>
+  <button class="btn btn-primary" ng-click="extractSample()">Extract Facts from Infoboxes</button>
+  <button class="btn btn-primary" ng-click="extractSampleFreeText()">Extract Facts from Wiki Text</button>
+<br/>
+  <button class="btn btn-default" ng-click="convertToDistinctRDF()">Convert Infobox Extraction Results to distinct RDF</button>
+    <button class="btn btn-default" ng-click="convertToRDF()">Convert Infobox Extraction Results to RDF</button>
+    <br/>
+  <button class="btn btn-default" ng-click="extractSampleOccurences()">Find Sample Facts in Wiki Text</button>
+    <br/>
+    <button class="btn btn-default" ng-click="collectStats()">Collect Stats about Wiki Text</button>
+    <br/>
   <button class="btn btn-default" ng-click="listExtractedData()">Refresh Extracted Data</button>
-  <button class="btn btn-default" ng-click="convertToDistinctRDF()">Convert Extraction Results to distinct RDF</button>
-    <button class="btn btn-default" ng-click="convertToRDF()">Convert Extraction Results RDF</button>
-  <button class="btn btn-default" ng-click="extractSampleOccurences()">Find Sample Occurences in Text</button>
 </p>
 <br/><br/>
 
@@ -25,5 +30,8 @@
 <a download="{{extractionRunId()}}-rdf.tt" href="/api/v1/extractionruns/{{extractionRunId()}}/get-rdf">download rdf</a></br>
 <a download="{{extractionRunId()}}-distinct-rdf.tt" href="/api/v1/extractionruns/{{extractionRunId()}}/get-distinct-rdf">download distinct rdf</a></br>
 <a download="{{extractionRunId()}}-samples.zip" href="/api/v1/extractionruns/{{extractionRunId()}}/get-samples">download extracted samples</a></br>
+<a download="{{extractionRunId()}}-facts.zip" href="/api/v1/extractionruns/{{extractionRunId()}}/get-facts">download extracted facts</a></br>
+<a download="{{extractionRunId()}}-stats.zip" href="/api/v1/extractionruns/{{extractionRunId()}}/get-stats">download extracted stats</a></br>
+
 
 

@@ -12,7 +12,7 @@ import reactivemongo.core.commands.LastError
 object ExtractionRunController extends Controller {
 
   def listAsJson = Action.async {
-    ExtractionRun.listAsJson.map(runs => Ok(Json.toJson(runs)))
+    ExtractionRun.listAsJsonWoSamples.map(runs => Ok(Json.toJson(runs)))
   }
 
   def create = Action(parse.json) { request =>

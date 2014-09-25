@@ -100,7 +100,8 @@ object ExtractionResultsController extends Controller {
       val turtleSaver =  new SingletonPropertyTurtleSaver(s"data/$extractionRunId-distinct.tt")
       val enumerator = ExtractionRunPageResult.getEnumerator(extractionRunId)
       val consume = Iteratee.foreach[ExtractionRunPageResult] { res =>
-        val results = mergeDistinct(res)
+        //val results = mergeDistinct(res)
+        val results = mergeDistinctWithFilter(res)
         turtleSaver.write(results, res.page.wikipediaArticleName)
       }
       logger.debug("Start merging distinct quads")
@@ -154,6 +155,12 @@ object ExtractionResultsController extends Controller {
     QuadsMerger.getDistinctQuadsPerValueAndTimex(quadsWithYearPrecision)
   }
 
+  private val mergeDistinctWithFilter: (ExtractionRunPageResult)=>Seq[Quad] = (res) => {
+    // TODO: For now year precision is sufficient
+    val quadsWithYearPrecision = res.quads.map(convertToYearPrecision)
+    QuadsMerger.getDistinctQuadsPerYearWithNonTemporalFilter(quadsWithYearPrecision)
+  }
+
 //  private val enRes = "^http:\\/\\/en.dbpedia.org\\/resource\\/(.*)$".r
 //
 //  /** The extractor returns resource quads with the english resource uri
@@ -168,11 +175,11 @@ object ExtractionResultsController extends Controller {
 
 
   val convertToYearPrecision = (q: Quad) => {
-    val from = q.context.get("fromDate") match {
+    val from = q.fromDate match {
       case Some(year) => Seq("fromDate" -> year.substring(0, 4))
       case None => Seq.empty
     }
-    val to = q.context.get("toDate") match {
+    val to = q.toDate match {
       case Some(year) => Seq("toDate" -> year.substring(0, 4))
       case None => Seq.empty
     }

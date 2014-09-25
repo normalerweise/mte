@@ -79,11 +79,11 @@ class AdvancedTimexParser extends DataParser {
 
       trueTimexes.length match {
         case 0 => (None, None)
-        case 1 => (getTimexValue(dateTimexes.head), None)
+        case 1 => (getTimexValue(trueTimexes.head), None)
         case 2 =>
           // interval found -> store in temporal order
-          val first = getTimexValue(dateTimexes.head)
-          val second = getTimexValue(dateTimexes.last)
+          val first = getTimexValue(trueTimexes.head)
+          val second = getTimexValue(trueTimexes.last)
           (first,second) match {
             case (Some(first), Some(second)) if first <= second => (Some(first), Some(second))
             case (Some(first), Some(second)) if first > second => (Some(second), Some(first))
@@ -92,7 +92,7 @@ class AdvancedTimexParser extends DataParser {
             case (None, None) => (None, None)
           }
         case i if i > 2 =>
-          throw new UnexpectedNumberOfTimexesException(i, dateTimexes.map(t => t.toString))
+          throw new UnexpectedNumberOfTimexesException(i, trueTimexes.map(t => t.toString))
       }
     }
 

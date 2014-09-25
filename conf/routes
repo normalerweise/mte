@@ -24,10 +24,15 @@ GET  /api/v1/extractionruns/:id/download            controllers.PageController.d
 GET  /api/v1/extractionruns/:id/convert             controllers.PageController.convertResourcesOfExtractionRunFromWikiMarkupToText(id)
 GET  /api/v1/extractionruns/:id/find-samples         controllers.PageController.extractSamplesFromWikiText(id)
 GET  /api/v1/extractionruns/:id/get-samples         controllers.PageController.getSamples(id)
+GET  /api/v1/extractionruns/:id/get-facts         controllers.PageController.getFacts(id)
+GET  /api/v1/extractionruns/:id/get-sats         controllers.PageController.getStats(id)
 
 GET  /api/v1/extractionruns/:id/page-data           controllers.PageController.listDownloadedDataOfExtractionRun(id)
 GET  /api/v1/extractionruns/:id/infobox-extraction  controllers.InfoboxExtractionController.extractExtractionRunResources(id)
 GET  /api/v1/extractionruns/:id/wikitext-extraction  controllers.FreeTextExtractionController.extractFactsFromWikiText(id)
+
+GET  /api/v1/extractionruns/:id/wikitext-statistics  controllers.CorpusStatisticsController.extractWikiTextStatistics(id)
+
 
 GET  /api/v1/extractionruns/:id/extraction-results  controllers.ExtractionResultsController.getExtractionRunResults(id)
 GET  /api/v1/extractionruns/:id/list-results        controllers.ExtractionResultsController.listExtractionRunResults(id)

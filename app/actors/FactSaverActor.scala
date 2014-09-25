@@ -27,10 +27,9 @@ class FactSaverActor extends Actor {
       closeExtractionRunId(extractionRunId)
       sender ! Status.Success("closed")
 
-    case SaveExtractedFactsOfArticle(facts, sender) => try {
-      log.info(s"received ${facts.size} facts")
+    case SaveExtractedFactsOfArticle(facts, originalSender) => try {
       saveExtractedFacts(facts)
-      sender ! Status.Success("saved")
+      originalSender ! Status.Success("saved")
     }
   }
 
@@ -50,19 +49,34 @@ class FactSaverActor extends Actor {
   private def saveExtractedFacts(facts: Seq[ExtractedFact]) = for {
     fact <- facts
     sentenceText = fact.sentenceText
-    relation = fact.quad.relation
+    qEntity = fact.quad.entity
+    qRelation = fact.quad.relation
+    qValue = fact.quad.value
+    qTimex = fact.quad.timex.getOrElse("?")
+
     sRelation = fact.sRelation
     srBegin = sRelation.begin
     srEnd = sRelation.end
-    rValue = sentenceText.substring(srBegin, srEnd)
+    sValue = fact.sValue
+    svBegin = sValue.begin
+    svEnd = sValue.end
+    sEntities = fact.sEntities
+    sTimexes = fact.sTimexes
   } {
+
+    val entityString = sEntities.map(e => s"${e.dbpediaResourceUri} (${e.begin},${e.end})").mkString(", ")
+    val timexString = sTimexes.map(t => s"${t.value} (${t.begin},${t.end})").mkString(", ")
 
     factFileWriter.append(
       s"""
           |${fact.articleName}: ${fact.revisionNumber}
           |Sentence:
-          | ${sentenceText.replace("\n", " ")}
-          |  P:$relation ($rValue, $srBegin, $srEnd)
+          | ${sentenceText}
+          |Quad: <$qEntity, $qRelation, $qValue, $qTimex>
+          |   S:$entityString
+          |   P:${sRelation.dbpediaOntologyUri} ($srBegin, $srEnd)
+          |   O:${sValue.parsedNumericValue} ($svBegin, $svEnd)
+          |   T:$timexString
         """.stripMargin)
 
     factFileWriter.flush

@@ -51,11 +51,19 @@ object DefaultActors {
     supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[FreeTextFactExtractionActor]),"freetextExtractor")
       map { case a: ActorRef => a}, 1 second)
 
+  lazy val statisticsExtractor = Await.result(
+    supervisor ? CreateActor(BalancingPool(numberOfExtractorWorkers).props(Props[StatisticsCollectionActor]),"statisticsCollection")
+      map { case a: ActorRef => a}, 1 second)
+
   lazy val sampleSaver = Await.result(
     supervisor ? CreateActor(Props[SampleSaverActor],"sampleSaver") map { case a: ActorRef => a}, 1 second)
 
   lazy val factSaver = Await.result(
     supervisor ? CreateActor(Props[FactSaverActor],"factSaver") map { case a: ActorRef => a}, 1 second)
+
+  lazy val statisticsSaver = Await.result(
+    supervisor ? CreateActor(Props[StatisticsSaverActor],"statSaver") map { case a: ActorRef => a}, 1 second)
+
 
   lazy val sampleCandidateSaver = Await.result(
     supervisor ? CreateActor(Props[SampleCandidateSaverActor],"sampleCandidteSaver") map { case a: ActorRef => a}, 1 second)

@@ -1,23 +1,20 @@
 package actors
 
-import java.io.{File, BufferedWriter, FileWriter, Writer}
+import java.io.{FileWriter, BufferedWriter, Writer, File}
 
-import akka.actor.{Actor, ActorRef, Status}
+import actors.SampleFiles.Format
+import akka.actor.{Actor, Status}
+import ch.weisenburger.nlp.stanford.util.MaxEntClassifierFeatureFactory
 import ch.weisenburger.uima.types.distantsupervision.skala._
-import controllers.FileUtil
 import org.slf4j.LoggerFactory
 
-/**
- * Created by Norman on 14.07.14.
- */
+
 class SampleSaverActor extends Actor {
 
-  var log = LoggerFactory.getLogger(getClass)
-  var extractionRunId: String = _
+  private var log = LoggerFactory.getLogger(getClass)
 
-  val posSampleWriters: collection.mutable.Map[String, SampleFileWriters] = collection.mutable.HashMap.empty
-
-  var negSamplesCRFTrainFileWriter: Writer = _
+  private var extractionRunId: String = _
+  private var sampleFiles: SampleFiles = _
 
 
   def receive = {
@@ -30,46 +27,34 @@ class SampleSaverActor extends Actor {
       closeExtractionRunId(extractionRunId)
       sender ! Status.Success("closed")
 
-    case SaveSamplesOfArticle(samples) =>
-      log.info(s"received ${samples.size}")
+    case SavePositiveSamplesOfArticle(samples) =>
       saveSamples(samples)
+
     case SaveNegativeSamplesOfArticle(negativeSamples) =>
-      log.info(s"received ${negativeSamples.size} negative samples")
       saveNegativeSamples(negativeSamples)
   }
 
+
   private def openExtractionRunId(extractionRunId: String) = {
     this.extractionRunId = extractionRunId
-
-    ch.weisenburger.deprecated_ner.FileUtil.deleteFolder(new File(s"data/samples/$extractionRunId/"))
-
-    val negSamplesCRFTrainFile = FileUtil.ensureExists(s"data/samples/$extractionRunId/negative_samples/negative_samples.tsv")
-    negSamplesCRFTrainFileWriter = new BufferedWriter(new FileWriter(negSamplesCRFTrainFile))
-
-    log.info(s"opened files for runId $extractionRunId")
+    this.sampleFiles = new SampleFiles(s"data/samples/$extractionRunId/")
+    log.info(s"Opened files for runId $extractionRunId")
   }
 
   private def closeExtractionRunId(extractionRunId: String) = {
-    negSamplesCRFTrainFileWriter.close
-    negSamplesCRFTrainFileWriter = null
-
-    posSampleWriters.foreach { case (_, w) => w.close}
-    posSampleWriters.clear
-
-    log.info(s"closed files for runId $extractionRunId")
+    // we don't support multiple extraction runs at the same time
+    assert(extractionRunId == this.extractionRunId)
+    sampleFiles.close
+    log.info(s"Closed files for runId $extractionRunId")
   }
+
 
   private def saveSamples(samples: Seq[Sample]) = for {
     sample <- samples
   } {
     saveHumanReadableRepresentation(sample)
     saveStanfordCRFTrainRepresentation(sample)
-  }
-
-  private def saveNegativeSamples(negativeSamples: Seq[NegativeSample]) = for {
-    negativeSample <- negativeSamples
-  } {
-    saveStanfordCRFTrainRepresentation(negativeSample)
+    saveStanfordMaxEntTrainRepresentation(sample)
   }
 
   private def saveHumanReadableRepresentation(sample: Sample) = {
@@ -100,72 +85,110 @@ class SampleSaverActor extends Actor {
       s"""
        |${sample.articleName}: $revs
        |Sentence:
-       |${sentenceText.replace("\n", " ")}
+       |${sentenceText}
        |    Quad: <$qEntity, $qRelation, $qValue, $qTimex>
        |           $es, $rs, $vs, $ts
       """.stripMargin
 
-    val writer = getWriter(sTimex.isDefined, true, qRelation)
-    writer.append(textRepresentation)
-    writer.flush
+
+    sampleFiles.positive(qRelation, Format.Human, sTimex.isDefined)
+      .append(textRepresentation)
+  }
+
+  private def saveStanfordCRFTrainRepresentation(sample: Sample) = {
+    val hasTimex = sample.sTimex.isDefined
+    val relationURI = sample.quad.relation
+
+    val textRepresentation = toStanfordCRFTRepresentation(sample.tokens)
+
+    sampleFiles.positive(relationURI, Format.CRF, hasTimex)
+      .append(textRepresentation)
+  }
+
+  private def saveStanfordMaxEntTrainRepresentation(sample: Sample) = {
+    val relationURI = sample.quad.relation
+    val hasTimex = sample.sTimex.isDefined
+
+    val goldAnswer = models.Util.getLastUriComponent(relationURI)
+    val textRepresentation = toStanfordMaxEntRepresentation(goldAnswer, sample.tokens, sample.sValue)
+
+    sampleFiles.positive(relationURI, Format.MaxEnt, hasTimex)
+      .append(textRepresentation)
+  }
+
+
+  private def saveNegativeSamples(negativeSamples: Seq[NegativeSample]) = for {
+    negativeSample <- negativeSamples
+  } {
+    saveHumanReadableRepresentation(negativeSample)
+    saveStanfordCRFTrainRepresentation(negativeSample)
+    saveStanfordMaxEntTrainRepresentation(negativeSample)
+  }
+
+  private def saveHumanReadableRepresentation(negativeSample: NegativeSample) = {
+    val revs = negativeSample.revisionNumber.mkString(",")
+    val sentenceText = negativeSample.sentenceText
+    val formattedNumbers = negativeSample.formattedNumbers.map { n =>
+      s"${sentenceText.substring(n.begin, n.end)}; ${n.parsedNumericValue} (${n.begin}/${n.end})"
+    }.mkString("\n  ")
+
+    val textRepresentation =
+      s"""
+       |${negativeSample.articleName}: $revs
+       |Sentence:
+       |${sentenceText}
+       |Numbers:
+       |  $formattedNumbers
+      """.stripMargin
+
+    sampleFiles.negative.human.append(textRepresentation)
   }
 
   private def saveStanfordCRFTrainRepresentation(negativeSample: NegativeSample) = {
     val textRepresentation = toStanfordCRFTRepresentation(negativeSample.tokens)
-    negSamplesCRFTrainFileWriter.append(textRepresentation)
-    negSamplesCRFTrainFileWriter.flush
+    sampleFiles.negative.crf.append(textRepresentation)
   }
 
-  private def saveStanfordCRFTrainRepresentation(sample: Sample) = {
-    val sTimex = sample.sTimex
-    val qRelation = sample.quad.relation
-
-    val textRepresentation = toStanfordCRFTRepresentation(sample.tokens)
-
-    val writer = getWriter(sTimex.isDefined, false, qRelation)
-    writer.append(textRepresentation)
-    writer.flush
-  }
-
-  private def toStanfordCRFTRepresentation(tokens: Seq[Token]) = tokens
-    .map(t => Seq(t.relationValueType.getOrElse("O"), t.text, t.lemma, t.posTag, t.namedEntityType.getOrElse("O")))
-    .map(seq => seq.mkString("\t")).mkString("\n") + "\n\n" // add newline after end of sample
-
-
-  private def getWriter(hasTimex: Boolean, humanReadable: Boolean, relationUri: String) = {
-    val relation = ch.weisenburger.deprecated_ner.Util.getLastUriComponent(relationUri)
-    val writers = posSampleWriters.getOrElse(relation, {
-      val path = s"data/samples/$extractionRunId/positive_samples/"
-      val writers = SampleFileWriters.apply(path, relation)
-      posSampleWriters(relation) = writers
-      writers
-    })
-
-    (hasTimex, humanReadable) match {
-      case (true, true) => writers.withTimexHuman
-      case (false, false) => writers.withoutTimexStanfordCRFTrain
-      case (true, false) => writers.withTimexStanfordCRFTrain
-      case (false, true) => writers.withoutTimexHuman
+  private def saveStanfordMaxEntTrainRepresentation(negativeSample: NegativeSample) = {
+    for (value <- negativeSample.formattedNumbers) {
+      val textRepresentation = toStanfordMaxEntRepresentation("O", negativeSample.tokens, value)
+      sampleFiles.negative.maxEnt.append(textRepresentation)
     }
-
   }
+
+  private def toStanfordCRFTRepresentation(tokens: Seq[Token]) = {
+    tokens
+      .map(t => Seq(t.relationValueType.getOrElse("O"), t.text, t.lemma, t.posTag, t.namedEntityType.getOrElse("O")))
+      .map(seq => seq.mkString("\t")).mkString("\n") + "\n\n"  // add newline after end of sample
+  }
+
+  private def toStanfordMaxEntRepresentation (goldAnswer: String, tokens: Seq[Token], value: Value) = {
+    val features = MaxEntClassifierFeatureFactory.createFeatures(tokens, value)
+    (Seq (goldAnswer) ++ features).mkString ("\t") + "\n"
+  }
+
 }
 
 
 class SampleCandidateSaverActor extends Actor {
+
+  import ch.weisenburger.deprecated_ner.FileUtil
 
   var log = LoggerFactory.getLogger(getClass)
 
   var sampleCandidatesFileWriter: Writer = _
 
   def receive = {
+
     case OpenExtractionRun(extractionRunId) =>
       openExtractionRunId(extractionRunId)
       sender ! Status.Success
+
     case CloseExtractionRun(extractionRunId) =>
       closeExtractionRunId(extractionRunId)
       sender ! Status.Success
-    case SaveSampleCandidatesOfArticle(sampleCandidates) =>
+
+    case SavePositiveSampleCandidatesOfArticle(sampleCandidates) =>
       log.info(s"received ${sampleCandidates.size}")
       saveSampleCandidates(sampleCandidates)
   }
@@ -209,7 +232,7 @@ class SampleCandidateSaverActor extends Actor {
       s"""
           |${sc.articleName}: $revs
           |Sentence:
-          | ${sentenceText.replace("\n", " ")}
+          | ${sentenceText}
           |  S:$strEntities
           |  P:$strRelations
           |  O:$strValues
@@ -219,39 +242,122 @@ class SampleCandidateSaverActor extends Actor {
   }
 }
 
-object SampleFileWriters {
-  def apply(dirPath: String, relation: String) = {
-    new SampleFileWriters(
-      newWriter(dirPath + s"$relation/withTimex.txt"),
-      newWriter(dirPath + s"$relation/withoutTimex.txt"),
-      newWriter(dirPath + s"$relation/withTimex.tsv"),
-      newWriter(dirPath + s"$relation/withoutTimex.tsv")
+
+
+object SampleFiles {
+
+  object Format extends Enumeration {
+    type Format = Value
+    val Human, CRF, MaxEnt = Value
+  }
+
+}
+
+class SampleFiles(runDirPath: String) {
+
+  import SampleFiles.Format._
+  import ch.weisenburger.deprecated_ner.FileUtil
+
+  val posDirPath = runDirPath + "positive_samples/"
+  val negDirPath = runDirPath + "negative_samples/"
+
+  // ensure we don't have an old file structure present
+  FileUtil.deleteFolder(new File(posDirPath))
+  FileUtil.deleteFolder(new File(negDirPath))
+
+  private lazy val negSamplesWriters = NegativeSampleFileWriters(
+    newWriter(negDirPath + "human.txt"),
+    newWriter(negDirPath + "crf.tsv"),
+    newWriter(negDirPath + "maxent.tsv")
+  )
+
+  private val posSamplesWriters: collection.mutable.Map[String, PositiveSampleFileWritersOfRelation] = collection.mutable.HashMap.empty
+
+  def negative = negSamplesWriters
+
+  def positive(relationUri: String, format: Format, hasTimex: Boolean): Writer = {
+    val writers = positive(relationUri)
+    (hasTimex, format) match {
+      case (true, Human) => writers.withTimexHuman
+      case (false, Human) => writers.withoutTimexHuman
+      case (true, CRF) => writers.withTimexCRF
+      case (false, CRF) => writers.withoutTimexCRF
+      case (true, MaxEnt) => writers.withTimexMaxEnt
+      case (false, MaxEnt) => writers.withoutTimexMaxEnt
+      case _ => throw new IllegalArgumentException(
+        s"Invalid hasTimex, file format combination: $hasTimex; $format ")
+    }
+  }
+
+  def positive(relationURI: String) =
+    posSamplesWriters.getOrElse(relationURI, {
+      val relationFolderName = models.Util.getLastUriComponent(relationURI)
+      val writers = openForRelation(relationFolderName)
+      posSamplesWriters(relationURI) = writers
+      writers
+    })
+
+  private def openForRelation(relationFolderName: String) = {
+    PositiveSampleFileWritersOfRelation(
+      newWriter(posDirPath + s"$relationFolderName/withTimex.txt"),
+      newWriter(posDirPath + s"$relationFolderName/withoutTimex.txt"),
+      newWriter(posDirPath + s"$relationFolderName/withTimexCRF.tsv"),
+      newWriter(posDirPath + s"$relationFolderName/withoutTimexCRF.tsv"),
+      newWriter(posDirPath + s"$relationFolderName/withTimexMaxEnt.tsv"),
+      newWriter(posDirPath + s"$relationFolderName/withoutTimexMaxEnt.tsv")
     )
   }
 
   private def newWriter(filePath: String) = {
     val file = FileUtil.ensureExists(filePath)
-    new BufferedWriter(new FileWriter(file))
+    new AlwaysFlushWriter(new BufferedWriter(new FileWriter(file)))
   }
 
+  def close = {
+    posSamplesWriters.foreach { case (_, w) => w.close}
+    posSamplesWriters.clear
+    negSamplesWriters.close
+  }
 }
 
-case class SampleFileWriters(withTimexHuman: Writer, withoutTimexHuman: Writer, withTimexStanfordCRFTrain: Writer, withoutTimexStanfordCRFTrain: Writer) {
+class AlwaysFlushWriter(writer: Writer) extends Writer {
+  override def write(cbuf: Array[Char], off: Int, len: Int): Unit = {
+    writer.write(cbuf, off, len)
+    writer.flush
+  }
+
+  override def flush(): Unit = writer.flush
+
+  override def close(): Unit = writer.close
+}
+
+case class PositiveSampleFileWritersOfRelation(withTimexHuman: Writer, withoutTimexHuman: Writer, withTimexCRF: Writer, withoutTimexCRF: Writer, withTimexMaxEnt: Writer, withoutTimexMaxEnt: Writer) {
   def close = {
     withTimexHuman.close
     withoutTimexHuman.close
-    withTimexStanfordCRFTrain.close
-    withoutTimexStanfordCRFTrain.close
+    withTimexCRF.close
+    withoutTimexCRF.close
+    withTimexMaxEnt.close
+    withoutTimexMaxEnt.close
   }
 }
+
+case class NegativeSampleFileWriters(human: Writer, crf: Writer, maxEnt: Writer) {
+  def close = {
+    human.close
+    crf.close
+    maxEnt.close
+  }
+}
+
 
 case class OpenExtractionRun(extractionRunId: String)
 
 case class CloseExtractionRun(extractionRunId: String)
 
-case class SaveSamplesOfArticle(samples: Seq[Sample])
+case class SavePositiveSamplesOfArticle(samples: Seq[Sample])
 
 case class SaveNegativeSamplesOfArticle(negativeSamples: Seq[NegativeSample])
 
-case class SaveSampleCandidatesOfArticle(sampleCandidates: Seq[SampleCandidate])
+case class SavePositiveSampleCandidatesOfArticle(sampleCandidates: Seq[SampleCandidate])
 

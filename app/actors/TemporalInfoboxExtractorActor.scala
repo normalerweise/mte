@@ -73,6 +73,7 @@ class TemporalInfoboxExtractorActor extends Actor {
 
   private def extractAndSafe(extractionRunId: BSONObjectID, extractionRunDescription: String, pageTitleInUri: String) =  {
     logger.debug(s"Load revisions of $pageTitleInUri")
+    // TODO use processor trait
     val revisions = Await.result(Revision.getPageRevs(pageTitleInUri), 30 seconds)
     if(revisions.size == 0){
       throw new NoRevisionDataException("")

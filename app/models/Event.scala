@@ -28,8 +28,12 @@ object EventTypes extends Enumeration {
   val downloadedPageRevisions = EventTypeValue("downloadedPageRevisions", "Downloaded Page Revisions")
   val extractedSamplesFromPageRevisions = EventTypeValue("extractedSamplesFromPageRevisions", "Extracted Samples from Page Revisions")
   val extractedFactsFromPageRevisions = EventTypeValue("extractedFactsFromPageRevisions", "Extracted Facts from Page Revisions")
+
+  val collectedStatisticsFromPageRevisions = EventTypeValue("collectedStatisticsFromPageRevisions", "Collected Statistics from Page Revisions")
+
   val finishedSampeExtraction = EventTypeValue("finishedSampeExtraction", "Finished Sample Extraction")
   val finishedFactExtraction = EventTypeValue("finishedFactExtraction", "Finished Fact Extraction")
+  val finishedStatsCollection = EventTypeValue("finishedStatsCollection", "Finished Stats Collection")
   val extractedPageRevisions = EventTypeValue("extractedPageRevisions", "Extracted Page Revisions")
   val droppedRevisions = EventTypeValue("droppedRevisions", "Dropped Revisions")
   val wikipageDoesNoExist = EventTypeValue("wikipageDoesNoExist", "Wiki page does not exist")

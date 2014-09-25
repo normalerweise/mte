@@ -316,6 +316,13 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
         });
    }
 
+   $scope.collectStats = function() {
+      var id = $scope.extractionRunId();
+           $http.get('/api/v1/extractionruns/' + id + '/wikitext-statistics').success(function(res){
+             toaster.pop('success', "Process Results", "Triggered Stats Collection!", 3000);
+           });
+      }
+
   $scope.listExtractedData();
 
 }

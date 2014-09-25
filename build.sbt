@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "jcl-over-slf4j" % "1.7.7", // redirect the apache http lib logging to slf4j
   "org.slf4j" % "log4j-over-slf4j" % "1.7.7", // redirect the apache http lib logging to slf4j
   "ch.qos.logback" % "logback-classic" % "1.1.2",
-  "com.kenshoo" %% "metrics-play" % "0.1.3",
+  "com.kenshoo" %% "metrics-play" % "2.3.0_0.1.6",
   "nl.grons" %% "metrics-scala" % "3.2.1_a2.3",
   // WEB
   "org.webjars" %% "webjars-play" % "2.3.0",

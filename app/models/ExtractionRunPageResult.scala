@@ -21,7 +21,11 @@ import scala.Some
  * Created by Norman on 03.04.14.
  */
 
-case class Quad(subject: String, predicate: String, obj: String, datatype: Option[String], language: Option[String], context: Map[String, String])
+case class Quad(subject: String, predicate: String, obj: String, datatype: Option[String], language: Option[String], context: Map[String, String]) {
+  def sourceRevision = context.get("sourceRevision")
+  def fromDate = context.get("fromDate")
+  def toDate = context.get("toDate")
+}
 
 case class ExtractionRunPageResult(id: String, extractionRunId: BSONObjectID, extractionRunDescription: String, page: Page, quads: List[Quad])
 

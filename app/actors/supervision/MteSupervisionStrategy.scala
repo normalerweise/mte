@@ -1,11 +1,12 @@
 package actors.supervision
 
+import actors.RevisionsOfResourceProcessingOutOfMemory
+
 import scala.concurrent.duration._
 import akka.actor._
 import akka.actor.SupervisorStrategy._
 import actors.events.EventLogger
 import akka.actor.OneForOneStrategy
-import play.api.Logger
 import models.RevisionException
 import java.io.IOException
 import extraction.download.WikipediaClient.ResultParsingException
@@ -42,6 +43,9 @@ class MteSupervisionStrategy extends SupervisorStrategyConfigurator {
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: java.util.concurrent.TimeoutException =>
+        EventLogger.raiseExceptionEvent(ex)
+        Restart
+      case ex: RevisionsOfResourceProcessingOutOfMemory =>
         EventLogger.raiseExceptionEvent(ex)
         Restart
       case ex: Exception =>

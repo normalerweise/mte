@@ -1,5 +1,6 @@
 package actors
 
+import java.lang.ref.WeakReference
 import java.net.{URLEncoder, URLDecoder}
 
 /**
@@ -21,5 +22,16 @@ object Util {
   def encodeWikiArticleName(wikiArticleName: String) = {
     URLEncoder.encode(wikiArticleName, "UTF-8")
   }
+
+  def gc() = {
+    var obj = new Object()
+    var ref = new WeakReference[Object](obj)
+    obj = null
+    while(ref.get != null) {
+      System.gc
+    }
+  }
+
+  def buildWikipediaURL(artilcleName: String, revision: Long) = s"http://en.wikipedia.org/w/index.php?title=$artilcleName&oldid=$revision"
 
 }

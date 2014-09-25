@@ -115,18 +115,29 @@ object PageController extends Controller {
       val sampleFinderResults = Future.sequence(
         run.getResources.view.zipWithIndex
           .map { case (pageUri, index) =>
-          sampleFinder ? ExtractSamplesFromRevisionTexts(Some(run.id), index + 1, sampleSize, pageUri._1)
+          sampleFinder.?(ExtractSamplesFromRevisionTexts(Some(run.id), index + 1, sampleSize, pageUri._1))(48 hours)
         })
 
-      Await.result(sampleFinderResults, 48 hours)
 
-      val closeFiles = Future.sequence(Seq(
-        sampleSaver ? CloseExtractionRun(extractionRunId),
-        sampleCandidateSaver ? CloseExtractionRun(extractionRunId)))
-      Await.result(closeFiles, 10 seconds)
+      sampleFinderResults.onComplete {
+        case Success(_) =>
+          val closeFiles = Future.sequence(Seq(
+            sampleSaver ? CloseExtractionRun(extractionRunId),
+            sampleCandidateSaver ? CloseExtractionRun(extractionRunId)))
+          Await.result(closeFiles, 10 seconds)
 
-      log.info("finished sample Extraction")
-      EventLogger raise Event(finishedSampeExtraction)
+          log.info("finished sample Extraction")
+          EventLogger raise Event(finishedSampeExtraction)
+        case Failure(t) =>
+          val closeFiles = Future.sequence(Seq(
+            sampleSaver ? CloseExtractionRun(extractionRunId),
+            sampleCandidateSaver ? CloseExtractionRun(extractionRunId)))
+          Await.result(closeFiles, 10 seconds)
+
+          log.info("finished sample Extraction with errors")
+          EventLogger raise Event(finishedSampeExtraction)
+          EventLogger.raiseExceptionEvent(t)
+      }
     }
     Ok
   }
@@ -135,6 +146,19 @@ object PageController extends Controller {
     val samplesFilePath = s"${extractionRunId}_samples.zip"
     zip(new File(s"data/samples/$extractionRunId"), new File("data/" +samplesFilePath))
     Application.dataFile(samplesFilePath)
+  }
+
+  def getStats(extractionRunId: String) = {
+    val statsFilePath = s"${extractionRunId}_stats.zip"
+    zip(new File(s"data/stats/$extractionRunId"), new File("data/" +statsFilePath))
+    Application.dataFile(statsFilePath)
+  }
+
+
+  def getFacts(extractionRunId: String) = {
+    val factsFilePath = s"${extractionRunId}_facts.zip"
+    zip(new File(s"data/facts/$extractionRunId"), new File("data/" +factsFilePath))
+    Application.dataFile(factsFilePath)
   }
 
 
