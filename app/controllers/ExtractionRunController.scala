@@ -1,5 +1,6 @@
 package controllers
 
+import controllers.ExtractionResultsController._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{Action, Controller}
 import models.{Event, ExtractionRunPageResult, ExtractionRun}
@@ -45,5 +46,11 @@ object ExtractionRunController extends Controller {
       }
     }
   }
+
+
+  def getExtractionRunEventStats(extractionRunId: String) = Action.async {
+    Event.eventStatsForRun(extractionRunId).map(res => Ok(Json.prettyPrint(Json.toJson(res))))
+  }
+
 
 }

@@ -54,11 +54,6 @@ require(['angular', './controllers' ,'./directives', './filters', './services', 
           templateUrl: 'partials/partial4.html',
           controller: controllers.MyCtrl4
         })
-        .state('extraction.semistructured.stats', {
-          url: "/stats",
-          templateUrl: 'partials/partial5.html',
-          controller: controllers.MyCtrl5
-        })
         .state('masterdata',{
            parent: 'withNavbar',
            url: "/masterdata",

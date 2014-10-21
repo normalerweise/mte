@@ -18,7 +18,6 @@ DELETE /api/v1/extractionruns/:id                       controllers.ExtractionRu
 GET  /api/v1/extractionruns/:extractionRunId/resources-random-sample  controllers.SampleController.generateRandomSampleForPredefinedQueryResults(size: Int, extractionRunId, queryId)
 POST /api/v1/extractionruns/resources-from-file                       controllers.SampleController.generateSampleFromFile
 
-GET  /api/v1/extractionruns/extraction-results      controllers.ExtractionResultsController.getAll
 GET  /api/v1/extractionruns/:id                     controllers.ExtractionRunController.getById(id)
 GET  /api/v1/extractionruns/:id/download            controllers.PageController.downloadResourcesOfExtractionRun(id)
 GET  /api/v1/extractionruns/:id/convert             controllers.PageController.convertResourcesOfExtractionRunFromWikiMarkupToText(id)
@@ -36,12 +35,12 @@ GET  /api/v1/extractionruns/:id/wikitext-statistics  controllers.CorpusStatistic
 
 GET  /api/v1/extractionruns/:id/extraction-results  controllers.ExtractionResultsController.getExtractionRunResults(id)
 GET  /api/v1/extractionruns/:id/list-results        controllers.ExtractionResultsController.listExtractionRunResults(id)
-GET  /api/v1/extractionruns/:id/stats               controllers.ExtractionResultsController.getExtractionRunStats(id)
-GET  /api/v1/extractionruns/:id/event-stats         controllers.ExtractionResultsController.getExtractionRunEventStats(id)
-GET  /api/v1/extractionruns/:id/quads-to-rdf        controllers.ExtractionResultsController.quadsToRDF(id)
-GET  /api/v1/extractionruns/:id/distinct-quads-to-rdf        controllers.ExtractionResultsController.distinctQuadsToRDF(id)
-GET  /api/v1/extractionruns/:id/get-rdf             controllers.ExtractionResultsController.getResultsAsRDF(id)
-GET  /api/v1/extractionruns/:id/get-distinct-rdf             controllers.ExtractionResultsController.getResultsAsDistinctRDF(id)
+
+GET  /api/v1/extractionruns/:id/event-stats         controllers.ExtractionRunController.getExtractionRunEventStats(id)
+GET  /api/v1/extractionruns/:id/quads-to-rdf        controllers.ExtractionResultsController.mergeExtractedQuadsToDistinctRDFDataSet(id)
+GET  /api/v1/extractionruns/:id/distinct-quads-to-rdf        controllers.ExtractionResultsController.mergeExtractedQuadsToTemporallyConsistentRDFDataSet(id)
+GET  /api/v1/extractionruns/:id/get-rdf             controllers.ExtractionResultsController.serveDistinctFactDataSet(id)
+GET  /api/v1/extractionruns/:id/get-distinct-rdf             controllers.ExtractionResultsController.serveTemporallyConsistentDataSet(id)
 
 
 # SPARQL Queries
@@ -57,7 +56,7 @@ GET /api/v1/sparql/query/predefined/:id/cached-result controllers.SparqlControll
 GET /api/v1/pages/revs                              controllers.PageController.listDownloadedData()
 GET /api/v1/pages/:pageTitle/revs                   controllers.PageController.getPageRevsAsJson(pageTitle)
 GET /api/v1/pages/:pageTitle/text-revs              controllers.PageController.getTextPageRevsAsJson(pageTitle)
-GET /api/v1/pages/:pageTitle/results                controllers.ExtractionResultsController.getExtractionRunResultsOfPage(extractionRunId, pageTitle)
+GET /api/v1/pages/:pageTitle/results                controllers.ExtractionResultsController.getExtractionRunResultsOfResource(extractionRunId, pageTitle)
 
 GET /api/v1/pages/download                          controllers.PageController.updateDownloadedData
 GET /api/v1/pages/:pageTitle/download               controllers.PageController.downloadSingleWikiPage(pageTitle)

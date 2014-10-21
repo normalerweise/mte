@@ -13,11 +13,13 @@ object OntologyUtil {
     "http://dbpedia.org/ontology/assets" -> true,
     "http://dbpedia.org/ontology/equity" -> true,
     "http://dbpedia.org/ontology/operatingIncome" -> true,
-    "http://dbpedia.org/ontology/netIncome" -> true)
+    "http://dbpedia.org/ontology/netIncome" -> true,
+    "http://dbpedia.org/ontology/team" -> true,
+    "http://dbpedia.org/ontology/formerTeam" -> true)
 
   val ontologyPredicates = Map("http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> true)
 
-  def isTemporalPredicate(predicateUri: String) = temporalPredicates.get(predicateUri).isDefined
+  def isTemporal1to1Predicate(predicateUri: String) = temporalPredicates.get(predicateUri).isDefined
   
   def isOntologyPredicate(predicateUri: String) = ontologyPredicates.get(predicateUri).isDefined
 

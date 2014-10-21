@@ -1,11 +1,66 @@
 package extraction.formatters
 
-import models.Quad
 import extraction.OntologyUtil
+import models.Quad
 
 object QuadsMerger {
 
-  val groupByTemporalInformation = (quads: Seq[Quad]) => {
+
+ private val NonTemporal = "non_temporal"
+
+
+  // filter non-temporal value if temporal value is present and select Ontology Predicates only
+  def mergeTemporallyConsistent(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
+    val groupedQuads = quadsOfWikiPage.groupBy(_.predicate)
+
+    val result = groupedQuads.map {
+      case (relation, quads) if OntologyUtil.isTemporal1to1Predicate(relation) =>
+        val temporallyGroupedQuads = quads groupBy fromDateValue
+        val (nonTemporal, temporal) = splitInNonTemporalAndTemporalParts(temporallyGroupedQuads)
+
+        val latestNonTemporalQuad = if(nonTemporal.isEmpty) None else Some(selectLatestQuad(nonTemporal))
+
+        if(temporal.isEmpty) {
+          Seq(latestNonTemporalQuad.get)
+        } else {
+          val selectedTemporalQuads = temporal.map {
+            case (_, quads) => selectLatestQuadOfMostFrequentValue(quads)
+          }.toSeq
+
+          val latestTemporalQuad = selectLatestQuad(selectedTemporalQuads)
+          
+          if(latestNonTemporalQuad.isDefined &&
+            latestNonTemporalQuad.get.sourceRevisionAsNum > latestTemporalQuad.sourceRevisionAsNum) {
+            // non-temporal quad is newer than temporal quad
+            (selectedTemporalQuads :+ latestNonTemporalQuad.get)
+          } else {
+            selectedTemporalQuads
+          }
+        }
+
+      case (relation, quads) if OntologyUtil.isOntologyPredicate(relation) =>
+        selectLatestQuadPerValue(quads)
+
+      case (relation, quads) =>
+        // We don't know how to merge this relation in a temporally consistent manner
+        throw UndefinedTemporalPropertyException()
+    }
+    result.flatten.toSeq
+  }
+
+
+  def getDistinctQuadsPerValueAndTemporalInformation(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
+    val groupedQuads = quadsOfWikiPage.groupBy(q =>
+      q.predicate + q.obj + q.fromDate.getOrElse(NonTemporal) + q.toDate.getOrElse(NonTemporal))
+
+    groupedQuads.map { case (_, quads) =>
+      selectLatestQuad(quads)
+    }.toSeq
+  }
+
+
+
+  private val groupByTemporalInformation = (quads: Seq[Quad]) => {
     quads.groupBy { q =>
       val from = q.fromDate
       val to = q.toDate
@@ -13,116 +68,48 @@ object QuadsMerger {
     }
   }
 
-  val groupByFromDateTemporalInformation = (quads: Seq[Quad]) => {
-    quads.groupBy { q =>
-      val from = q.fromDate
-      from.getOrElse("")
-    }
-  }
+  private val fromDateValue = (q: Quad) => q.fromDate.getOrElse(NonTemporal)
+
+  private val maxRev = (a: Quad, b: Quad) => if (a.sourceRevisionAsNum > b.sourceRevisionAsNum) a else b
+  private def selectLatestQuad(quads: Seq[Quad]) = quads reduce maxRev
+
+  private def selectLatestQuadPerValue(quads: Seq[Quad]) =
+    quads.groupBy(_.obj).map { case (_, quadsOfValue) => selectLatestQuad(quadsOfValue) }.toSeq
+
 
   // all quads have same subject prediacte and temporal information
-  val selectQuadsByValue: (Seq[Quad]) => Quad = (quads: Seq[Quad]) => quads.length match {
+  private def selectLatestQuadOfMostFrequentValue(quads: Seq[Quad]) = quads.length match {
     case 1 => quads(0) // return the single quad
-    case 2 =>
-      // Either the values differ or it does not matter which one we choose.
-      // Hard to state 'trust', assumption => later (higher) revisions are more reliable
-      quads.sortBy(_.sourceRevision.getOrElse("-1").toInt).last
-    case x if x > 2 =>
+    case x =>
       // Find the most frequent value, keep it simple -> in case of multiple values with highest frequency take the first
-      val sorted = quads.groupBy(_.obj).toSeq.sortBy(_._2.length * -1)
-
-      val mostFrequent = sorted.headOption.get // one value must exist
-      val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))
+      val sorted = quads.groupBy(_.obj).toSeq.sortBy{ case (value, quads) => quads.length * -1}
+      val mostFrequent = sorted.headOption.get._2 // one value must exist
+      val secondMostFrequent = sorted.lift(1).getOrElse(("", List.empty))._2
 
       // competing quad values -> more trust in later revisions
-      if (mostFrequent._2.length <= secondMostFrequent._2.length) {
-        val mostFrequentRev =
-          mostFrequent._2.sortBy(_.sourceRevision.getOrElse("-1").toInt)
-            .last.sourceRevision.getOrElse("-1").toInt
-        val secondMostFrequentRev =
-          secondMostFrequent._2.sortBy(_.sourceRevision.getOrElse("-1").toInt)
-            .last.sourceRevision.getOrElse("-1").toInt
-
-        if(mostFrequentRev > secondMostFrequentRev) {
-          mostFrequent._2.head
-        }else{
-          secondMostFrequent._2.head
-        }
-      }else {
-        mostFrequent._2.head
+      if (mostFrequent.length > secondMostFrequent.length) {
+        selectLatestQuad(mostFrequent)
+      } else if (mostFrequent.length < secondMostFrequent.length) {
+        selectLatestQuad(secondMostFrequent)
+      } else {
+        // frequency is equal, later revision decides
+        selectLatestQuad(mostFrequent ++ secondMostFrequent)
       }
   }
 
-  // assumes quadsOfWikiPage have the same subject
-  def getDistinctQuadsPerYear(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
-    val groupedQuads = quadsOfWikiPage.groupBy(_.predicate)
-    val result = groupedQuads.map { quads =>
-      if (OntologyUtil.isTemporalPredicate(quads._1)) {
-        val temporallyGroupedQuads = groupByTemporalInformation(quads._2)
-        val selectedQuads = temporallyGroupedQuads.map(q => selectQuadsByValue(q._2))
-        selectedQuads.toSeq
-      } else {
-      selectOneQuadPerValue(quads._2)
-    } 
-
+  private def splitInNonTemporalAndTemporalParts(temporallyGroupedQuads: Map[String, Seq[Quad]]) = {
+    val (nonTemporal, temporal) = temporallyGroupedQuads.partition {
+      case (year, _) => year == NonTemporal
     }
-    result.flatten.toSeq
-  }
 
-  val maxRev = (a: Quad,b: Quad) => if(a.sourceRevision.get.toLong > b.sourceRevision.get.toLong) a else b
-
-  // filter non-temporal value if temporal value is present and select Ontology Predicates only
-  def getDistinctQuadsPerYearWithNonTemporalFilter(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
-    val groupedQuads = quadsOfWikiPage.groupBy(_.predicate)
-    val result = groupedQuads.map { quads =>
-      if (OntologyUtil.isTemporalPredicate(quads._1)) {
-        val temporallyGroupedQuads = groupByFromDateTemporalInformation(quads._2)
-        val selectedQuads =
-          if(temporallyGroupedQuads.size == 1 && temporallyGroupedQuads.get("").isDefined) {
-            // Select the latest value for non temporal quad
-            Seq(temporallyGroupedQuads.head._2 reduce maxRev)
-          } else {
-            println(temporallyGroupedQuads)
-            val (nonTemporal, temporal) = temporallyGroupedQuads.partition(_._1 == "")
-            val temporalQuads = temporal.map(q => selectQuadsByValue(q._2))
-            // get the latest non temporal quad
-            if(nonTemporal.headOption.isDefined) {
-              val nonTemporalQuad = nonTemporal.head._2 reduce maxRev
-
-              val tempMaxRev = temporalQuads reduce maxRev
-              if (nonTemporalQuad.sourceRevision.get.toLong > tempMaxRev.sourceRevision.get.toLong) {
-                // non-temporal quad is newer than temporal quad
-                (temporalQuads.toSeq :+ nonTemporalQuad)
-              } else {
-                temporalQuads
-              }
-            }else {
-              temporalQuads
-            }
-          }
-        selectedQuads.toSeq
-      } else if (OntologyUtil.isOntologyPredicate(quads._1)) {
-        selectOneQuadPerValue(quads._2)
-      } else {
-       Seq.empty
-      }
+    val nonTemporalQuads = nonTemporal flatMap {
+      case (_, quads) => quads
     }
-    result.flatten.toSeq
+
+    (nonTemporalQuads.toSeq, temporal.toSeq)
   }
 
-  // assumes quadsOfWikiPage have the same subject
-  def getDistinctQuadsPerValueAndTimex(quadsOfWikiPage: Seq[Quad]): Seq[Quad] = {
-    val groupedQuads = quadsOfWikiPage.groupBy(q =>
-      q.predicate + q.obj + q.context.get("fromDate").getOrElse("") + q.context.get("toDate").getOrElse(""))
-    // select the first one
-    val result = groupedQuads.map { case (_,quads) =>
-      quads.head
-    }
-    result.toSeq
-  }
-
-  def selectOneQuadPerValue(quads: Seq[Quad])= {
-    quads.groupBy(_.obj).map { case (_,quadsOfValue) => quadsOfValue.head }.toSeq
-  }
-
+  case class UndefinedTemporalPropertyException() extends Exception
 }
+
+

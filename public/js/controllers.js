@@ -328,49 +328,6 @@ controllers.MyCtrl4 = function($scope, $http, ngTableParams, $filter, toaster) {
 }
 controllers.MyCtrl4.$inject = ['$scope', '$http','ngTableParams', '$filter', 'toaster'];
 
-controllers.MyCtrl5 = function($scope, $http, ngTableParams, $filter, $loading) {
-  var statsPerPage = [];
-
-    $scope.tableParams = new ngTableParams({
-              page: 1,            // show first page
-              count: 10,          // count per page
-              sorting: {
-                  createdOn: 'desc'     // initial sorting
-              }
-          }, {
-              total: statsPerPage.length, // length of data
-              getData: function ($defer, params) {
-                  // use build-in angular filter
-                  var filteredData = params.filter() ?
-                          $filter('filter')(statsPerPage, params.filter()) :
-                          statsPerPage;
-                  var orderedData = params.sorting() ?
-                          $filter('orderBy')(filteredData, params.orderBy()) :
-                          filteredData;
-
-                  params.total(orderedData.length); // set total for recalc pagination
-                  $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
-              }
-          });
-
-
-  $scope.getSampleStats= function(){
-    var id = $scope.extractionRunId();
-    $loading.start('stats');
-    $http.get('/api/v1/extractionruns/' + id + '/stats').success(function(stats){
-      statsPerPage = stats.perPage
-      $scope.stats = stats.aggregated;
-      $scope.noOfPages = stats.noOfPages;
-      $scope.tableParams.reload();
-      $loading.finish('stats');
-    });
-  };
-
-  $scope.getSampleStats()
-
-}
-controllers.MyCtrl5.$inject = ['$scope', '$http','ngTableParams', '$filter', '$loading'];
-
 controllers.Events = function($rootScope, $scope, $http, toaster) {
 
  init();
@@ -482,8 +439,7 @@ controllers.SemistructuredExtractionCtrl = function($scope, $state) {
     { state: 'overview', title: 'Select Extraction Run' },
     { state: 'generateSample', title: 'Select Resources' },
     { state: 'downloadWikiRevisions', title: 'Download' },
-    { state: 'extract', title: 'Extract' },
-    { state: 'stats', title: 'Statistics' }
+    { state: 'extract', title: 'Extract' }
   ]
 
   $scope.isActive = function(state) {

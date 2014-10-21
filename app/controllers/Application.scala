@@ -23,7 +23,6 @@ object Application extends Controller {
 
   def dataFile(path: String) = Action {
     val fullPath = "data/" + path
-    Logger.info("serve: " + fullPath)
     sendFile(fullPath)
   }
 
@@ -44,8 +43,8 @@ object Application extends Controller {
     }
   }
 
-  private def sendFile(fullPath: String) = {
-    Logger.info("App: " + Play.application.path)
+  def sendFile(fullPath: String) = {
+    Logger.info("serve: " + fullPath)
     Ok.sendFile(
       content = new java.io.File(fullPath),
       inline = true

@@ -33,23 +33,23 @@
 
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
-  <logger name="org.dbpedia.extraction.dataparser.UnitValueParser" level="ERROR" />
-  <logger name="org.dbpedia.extraction.mappings.SimplePropertyMapping" level="ERROR" />
-  <logger name="extraction.parser.AdvancedTimexParser" level="ERROR" />
+  <logger name="org.dbpedia.ch.weisenburger.extraction.dataparser.UnitValueParser" level="ERROR" />
+  <logger name="org.dbpedia.ch.weisenburger.extraction.mappings.SimplePropertyMapping" level="ERROR" />
+  <logger name="ch.weisenburger.extraction.parser.AdvancedTimexParser" level="ERROR" />
   <logger name="controllers.InfoboxExtractionController" level="INFO" />
 
   <logger name="TemporalInfoboxExtractorActorMemory" level="ERROR">
     <appender-ref ref="MEMORY_FILE" />
   </logger>
-  <logger name="actors.TemporalInfoboxExtractorActor" level="ERROR"/>
-  <logger name="actors.SampleFinderActor" level="INFO"/>
-  <logger name="actors.FreeTextFactExtractionActor" level="INFO"/>
-  <logger name="actors.FactSaverActor" level="INFO"/>
-  <logger name="actors.SampleSaverActor" level="INFO"/>
+  <logger name="ch.weisenburger.actors.TemporalInfoboxExtractorActor" level="ERROR"/>
+  <logger name="ch.weisenburger.actors.SampleFinderActor" level="INFO"/>
+  <logger name="ch.weisenburger.actors.FreeTextFactExtractionActor" level="INFO"/>
+  <logger name="ch.weisenburger.actors.FactSaverActor" level="INFO"/>
+  <logger name="ch.weisenburger.actors.SampleSaverActor" level="INFO"/>
   <logger name="ch.weisenburger.uima.FinancialDataSamplePipelineFactory" level="INFO"/>
   <logger name="ch.weisenburger.nlp.ner.CompanyRecognizer" level="INFO"/>
   <logger name="ch.weisenburger.nlp.ner.KBFinancialDataRelationTripleMatcher" level="INFO"/>
-  <logger name="org.dbpedia.extraction.dataparser.ParserUtils" level="ERROR"/>
+  <logger name="org.dbpedia.ch.weisenburger.extraction.dataparser.ParserUtils" level="ERROR"/>
   <logger name="controllers.ExtractionResultsController" level="DEBUG"/>
   <logger name="controllers.PageController" level="INFO"/>
 

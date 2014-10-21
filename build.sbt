@@ -16,6 +16,7 @@ resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/
 
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
+
 libraryDependencies ++= Seq(
   // crosscutting concerns: logging, config, runtime...
   "org.slf4j" % "slf4j-api" % "1.7.7",
@@ -48,7 +49,7 @@ libraryDependencies ++= Seq(
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("commons-logging", "commons-logging"),
   // DATA
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.akka23-SNAPSHOT"
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.0.akka23"
   //  exclude("org.apache.logging.log4j", "log4j-to-slf4j")
   //  exclude("org.apache.logging.log4j", "log4j-core")
   //  exclude("org.apache.logging.log4j", "log4j-api")

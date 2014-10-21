@@ -17,12 +17,16 @@ import reactivemongo.api.indexes.Index
 import play.modules.reactivemongo.json.collection.JSONCollection
 import scala.Some
 
-/**
- * Created by Norman on 03.04.14.
- */
 
+case class QuadWithoutSourceRevisionException() extends Exception
 case class Quad(subject: String, predicate: String, obj: String, datatype: Option[String], language: Option[String], context: Map[String, String]) {
   def sourceRevision = context.get("sourceRevision")
+    .getOrElse(throw QuadWithoutSourceRevisionException())
+
+  def sourceRevisionAsNum = context.get("sourceRevision")
+    .getOrElse(throw QuadWithoutSourceRevisionException()).toLong
+
+
   def fromDate = context.get("fromDate")
   def toDate = context.get("toDate")
 }
@@ -65,7 +69,7 @@ object ExtractionRunPageResult extends MongoModel {
 
   def getEnumerator(extractionRunId: String) =
     collection.find(Json.obj("extractionRunId" -> extractionRunId))
-      .cursor[ExtractionRunPageResult].enumerate()
+      .cursor[ExtractionRunPageResult].enumerate(stopOnError = true)
 
 
 
